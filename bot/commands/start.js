@@ -8,7 +8,7 @@ const startCommand = (bot) => {
                     Markup.button.callback("Подать заявку", "?apply_application")
                 ],
                 [
-                    Markup.button.callback("Мои заявки", "?my_applications")
+                    Markup.button.callback("Мои заявки", "?myApplications")
                 ]
             ]).resize().reply_markup,
             parse_mode: "HTML"

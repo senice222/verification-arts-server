@@ -14,10 +14,10 @@ const UserSchema = new mongoose.Schema(
             type: Date,
             required: true,
         },
-        applications: {
-            type: [],
-            default: []
-        }
+        applications:  [{
+            type: mongoose.Schema.Types.ObjectId,
+            ref: 'Application'
+        }]
     }
 );
 

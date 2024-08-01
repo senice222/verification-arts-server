@@ -1,10 +1,14 @@
 import {Telegraf, Scenes, session} from 'telegraf'
 import dotenv from 'dotenv'
 import startCommand from './bot/commands/start.js';
-import startAction from './bot/callbacks/apply_application.js';
+import startAction from './bot/callbacks/start.js';
 import applyCallback from './bot/callbacks/apply_application.js';
 import ApplyApplication from './bot/scenes/apply_first_app_scene.js';
 import is_registered from './bot/middleware/is_registered.js';
+import ApplyExistingApplication from './bot/scenes/apply_existing_app_scene.js';
+import listApplicationsAction from './bot/callbacks/applications/listApplicationsAction.js';
+import detailedApplication from './bot/callbacks/applications/detailedApplication.js';
+import downloadFile from './bot/callbacks/applications/downloadFile/downloadFile.js';
 
 dotenv.config();
 
@@ -14,8 +18,9 @@ const initBot = (app) => {
 	bot.use(session())
 
 	const Stage = new Scenes.Stage([ 
-        ApplyApplication
-    ], { ttl: 10 })
+        ApplyApplication,
+        ApplyExistingApplication
+    ])
 
 	// middlewares
 	bot.use(Stage.middleware())
@@ -29,7 +34,9 @@ const initBot = (app) => {
 	// callbacks    
     startAction(bot)
     applyCallback(bot)
-
+    listApplicationsAction(bot)
+    detailedApplication(bot)
+    downloadFile(bot)
 
     bot.launch().then(() => {
         console.log('Bot is running');
