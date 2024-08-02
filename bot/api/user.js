@@ -2,14 +2,27 @@ import { format } from 'date-fns'
 import ApplicationModel from '../../models/Application.model.js';
 import { Markup } from 'telegraf';
 import multer from "multer";
-import path, { dirname } from "path";
+import path, {dirname} from "path";
+import fs from 'fs'
 import { fileURLToPath } from "url";
 
 const __filename = fileURLToPath(import.meta.url)
 const __dirname = dirname(__filename)
+const uploadDirectory = path.join(__dirname, '../../api/uploads')
 
-const uploadPath = path.join(__dirname, '../api/uploads')
-const upload = multer({ dest: uploadPath })
+if (!fs.existsSync(uploadDirectory)) {
+    fs.mkdirSync(uploadDirectory, { recursive: true })
+}
+
+const storage = multer.diskStorage({
+    destination: function (req, file, cb) {
+        cb(null, uploadDirectory)
+    },
+    filename: function (req, file, cb) {
+        cb(null, file.originalname) 
+    }
+})
+const upload = multer({ storage: storage })
 
 export const setDateToAnswer = (app, bot) => {
     app.post("/api/application/set-date/:id", async (req, res) => {
@@ -43,7 +56,7 @@ export const reviewedApplication = (app, bot) => {
         const { id } = req.params
         const { _id, status, comments } = req.body;
         const fileAnswer = req.file.originalname
-
+        
         try {
             const updateData = { status, fileAnswer }
             if (comments) {

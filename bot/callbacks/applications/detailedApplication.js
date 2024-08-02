@@ -1,10 +1,5 @@
 import { Markup } from 'telegraf'
 import ApplicationModel from '../../../models/Application.model.js'
-import os from 'os';
-import fs from 'fs';
-import path from 'path';
-
-const baseDirectory = path.join(os.tmpdir(), 'uploads');
 
 const detailedApplication = (bot) => {
     bot.action([/\?detailedApp_(.+)/], async (ctx) => {
@@ -16,17 +11,17 @@ const detailedApplication = (bot) => {
                 return
             }
 
-            let messageText = `Заявка №${application.normalId}\nСтатус: ${application.status}`
+            let messageText = `<b>Заявка №${application.normalId}</b>\nСтатус: ${application.status}\n-\n<b>Приложенные файлы:</b>`
 
             if (application.fileAct) {
-                messageText += `\nФайл акт: <a href="${application.fileAct}">Скачать акт</a>`
+                messageText += `\nАкт: <a href="${application.fileAct}">скачать</a>`
             }
             if (application.fileExplain) {
-                messageText += `\nФайл пояснения: <a href="${application.fileExplain}">Скачать пояснения</a>`
+                messageText += `\nПояснения: <a href="${application.fileExplain}">скачать</a>`
             }
 
             if (application.fileAnswer.trim() !== '') {
-                messageText += `\n---\nКомментарии: ${application.comments}\nФайл: ${application.fileAnswer}`
+                messageText += `\n---\n<b>Ответ по заявке:</b>\nКомментарии: ${application.comments}\nФайлы: <a href="${application.fileAnswer}">скачать</a>`
 
                 await ctx.editMessageText(
                     messageText,
@@ -38,7 +33,7 @@ const detailedApplication = (bot) => {
                         parse_mode: 'HTML'
                     }
                 )
-            } else {
+            }  else {
                 await ctx.editMessageText(messageText,
                     {
                         reply_markup: Markup.inlineKeyboard([
@@ -56,7 +51,3 @@ const detailedApplication = (bot) => {
 }
 
 export default detailedApplication
-
-if (!fs.existsSync(baseDirectory)) {
-    fs.mkdirSync(baseDirectory, { recursive: true });
-}

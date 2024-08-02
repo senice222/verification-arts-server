@@ -4,6 +4,7 @@ import dotenv from 'dotenv'
 import initBot from "./bot.js"
 import express from "express";
 import cors from "cors";
+import path from "path";
 
 dotenv.config()
 mongoose.connect
@@ -13,9 +14,11 @@ mongoose.connect
 
         router.use(express.json())
         router.use(cors())
+        const __dirname = path.resolve();
+        router.use('/api/uploads', express.static(path.join(__dirname, 'api/uploads')));
 
         startServer(router)
-        // initBot(router)
+        initBot(router)
 
         router.listen(4000, () => {
             console.log('Server OK')

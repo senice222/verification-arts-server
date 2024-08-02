@@ -132,14 +132,14 @@ const ApplyApplication = new Scenes.WizardScene(
 				ctx.wizard.state.deleteMessages.push(msg.message_id);
 			} else {
 				try {
-					const fileUrl = await ctx.telegram.getFileLink(file.file_id);
-					ctx.wizard.state.data.fileExplain = fileUrl;
-	
-					const user = await UserModel.findOne({ id: ctx.from.id });
-					const application = new ApplicationModel(ctx.wizard.state.data);
-					await application.save();
-					user.applications.push(application._id);
-					await user.save();
+					const fileUrl = await ctx.telegram.getFileLink(file.file_id)
+					ctx.wizard.state.data.fileExplain = fileUrl
+					ctx.wizard.state.data.owner = ctx.from.id
+					const user = await UserModel.findOne({ id: ctx.from.id })
+					const application = new ApplicationModel(ctx.wizard.state.data)
+					await application.save()
+					user.applications.push(application._id)
+					await user.save()
 					await ctx.reply(
 						`<b>Заявка №${application.normalId} создана!</b>\nВ ближайшее время мы сообщим\nВам время рассмотрения заявки`,
 						{
@@ -148,10 +148,10 @@ const ApplyApplication = new Scenes.WizardScene(
 							]).resize().reply_markup,
 							parse_mode: 'HTML',
 						}
-					);
+					)
 	
-					ctx.wizard.state.deleteMessages.forEach(item => ctx.deleteMessage(item));
-					ctx.scene.leave();
+					ctx.wizard.state.deleteMessages.forEach(item => ctx.deleteMessage(item))
+					ctx.scene.leave()
 				} catch (err) {
 					console.error('Error during file processing:', err);
 					const msg = await ctx.reply('<b>Произошла ошибка при сохранении файла. Попробуйте снова.</b>', { parse_mode: 'HTML' });

@@ -18,8 +18,7 @@ const downloadFile = (bot) => {
                 await ctx.reply('Заявка не найдена.')
                 return
             }
-            
-            const filePath = path.join(baseDirectory, application.fileAct)
+            const filePath = path.join(baseDirectory, application.fileAnswer)
             if (!fs.existsSync(filePath)) {
                 await ctx.reply('Файл не найден.')
                 return

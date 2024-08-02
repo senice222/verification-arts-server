@@ -143,6 +143,7 @@ const ApplyExistingApplication = new Scenes.WizardScene(
                         }
 
                         const body = {
+                            owner: ctx.from.id,
                             name: application.name,
                             inn: application.inn,
                             fileAct: ctx.wizard.state.data.fileAct,

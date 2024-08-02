@@ -55,6 +55,10 @@ const ApplicationSchema = new mongoose.Schema(
         clarifications: {
             type: Boolean,
             default: false
+        },
+        owner: {
+            type: Number,
+            required: true
         }
     }
 );
