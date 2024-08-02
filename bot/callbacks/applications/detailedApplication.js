@@ -1,5 +1,10 @@
 import { Markup } from 'telegraf'
 import ApplicationModel from '../../../models/Application.model.js'
+import os from 'os';
+import fs from 'fs';
+import path from 'path';
+
+const baseDirectory = path.join(os.tmpdir(), 'uploads');
 
 const detailedApplication = (bot) => {
     bot.action([/\?detailedApp_(.+)/], async (ctx) => {
@@ -51,3 +56,7 @@ const detailedApplication = (bot) => {
 }
 
 export default detailedApplication
+
+if (!fs.existsSync(baseDirectory)) {
+    fs.mkdirSync(baseDirectory, { recursive: true });
+}
