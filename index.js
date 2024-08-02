@@ -22,7 +22,7 @@ mongoose.connect
         })
 
         startServer(router)
-        initBot(router)
+        // initBot(router)
     })
     .catch((e) => console.log('DB err', e))
 
