@@ -37,6 +37,7 @@ const ApplyApplication = new Scenes.WizardScene(
 	async ctx => {
 		if (ctx.updateType === 'message') {
 			ctx.wizard.state.data['name'] = ctx.message.text;
+			ctx.wizard.state.data['id'] = ctx.from.id
 			const msg = await ctx.reply(
 				`<b>⚙️ Введите ИНН компании, от которой отправляется акт</b>`,
 				{
@@ -90,7 +91,7 @@ const ApplyApplication = new Scenes.WizardScene(
 		}
 	},
 	async ctx => {
-		if (ctx.message && ctx.message.document) {
+		if (ctx.message.document) {
 			const file = ctx.message.document;
 			const fileMimeType = file.mime_type;
 			const allowedMimeTypes = ['application/pdf', 'application/msword', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'];
@@ -98,100 +99,67 @@ const ApplyApplication = new Scenes.WizardScene(
 			if (!allowedMimeTypes.includes(fileMimeType)) {
 				await ctx.reply('Пожалуйста, отправьте файл в формате PDF или Word (doc/docx).');
 			} else {
-				const fileLink = await ctx.telegram.getFileLink(file.file_id);
-				const filePath = path.join(baseDirectory, `${Date.now()}-${file.file_name}`);
-
 				try {
-					const response = await axios({
-						url: fileLink,
-						responseType: 'stream',
-					});
-
-					response.data.pipe(fs.createWriteStream(filePath));
-
-					response.data.on('end', async () => {
-						ctx.wizard.state.data.fileAct = `${Date.now()}-${file.file_name}`;
-						const msg = await ctx.reply(
-							`<b>⚙️ Отправьте файл с пояснениями:</b>`,
-							{
-								reply_markup: cancelKeyboard.reply_markup,
-								parse_mode: 'HTML',
-							}
-						)
-						ctx.wizard.state.deleteMessages.push(msg.message_id);
-						ctx.wizard.next();
-					});
-
-					response.data.on('error', async (err) => {
-						console.error('Error downloading file:', err);
-						await ctx.reply('Произошла ошибка при сохранении файла. Попробуйте снова.');
-					});
+					const fileUrl = await ctx.telegram.getFileLink(file.file_id);
+					ctx.wizard.state.data.fileAct = fileUrl
+					const msg = await ctx.reply(
+						'<b>⚙️ Отправьте файл с пояснениями:</b>',
+						{
+							reply_markup: cancelKeyboard.reply_markup,
+							parse_mode: 'HTML',
+						}
+					);
+					ctx.wizard.state.deleteMessages.push(msg.message_id);
+					ctx.wizard.next();
 				} catch (err) {
 					console.error('Error during file download:', err);
 					await ctx.reply('Произошла ошибка при сохранении файла. Попробуйте снова.');
 				}
 			}
-		} else if (ctx.message && ctx.message.text) {
+		} else if (ctx.message.text) {
 			const msg = await ctx.reply('Пожалуйста, отправьте файл.');
 			ctx.wizard.state.deleteMessages.push(msg.message_id);
 		}
 	},
 	async ctx => {
 		if (ctx.message.document) {
-			const file = ctx.message.document
-			const fileMimeType = file.mime_type
-			const allowedMimeTypes = ['application/pdf', 'application/msword', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document']
-
+			const file = ctx.message.document;
+			const fileMimeType = file.mime_type;
+			const allowedMimeTypes = ['application/pdf', 'application/msword', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'];
+	
 			if (!allowedMimeTypes.includes(fileMimeType)) {
-				const msg = await ctx.reply(`<b>Пожалуйста, отправьте файл в формате PDF или Word (doc/docx).</b>`, { parse_mode: "HTML" })
+				const msg = await ctx.reply('<b>Пожалуйста, отправьте файл в формате PDF или Word (doc/docx).</b>', { parse_mode: 'HTML' });
 				ctx.wizard.state.deleteMessages.push(msg.message_id);
 			} else {
-				const fileLink = await ctx.telegram.getFileLink(file.file_id)
-				const filePath = path.join(baseDirectory, `${Date.now()}-${file.file_name}`)
-
 				try {
-					const response = await axios({
-						url: fileLink,
-						responseType: 'stream',
-					})
-
-					response.data.pipe(fs.createWriteStream(filePath))
-
-					response.data.on('end', async () => {
-
-						ctx.wizard.state.data.fileExplain = `${Date.now()}-${file.file_name}`
-						const user = await UserModel.findOne({ id: ctx.from.id })
-						const application = new ApplicationModel(ctx.wizard.state.data)
-						await application.save()
-						user.applications.push(application._id)
-						await user.save()
-						await ctx.reply(
-							`<b>Заявка №${application.normalId} создана!</b>\nВ ближайшее время мы сообщим\nВам время рассмотрения заявки`,
-							{
-								reply_markup: Markup.inlineKeyboard([
-									Markup.button.callback('Перейти к заявке', `?application_${application._id}`)
-								]).resize().reply_markup,
-								parse_mode: 'HTML',
-							}
-						)
-
-						ctx.wizard.state.deleteMessages.forEach(item => ctx.deleteMessage(item))
-						ctx.scene.leave()
-					})
-
-					response.data.on('error', async (err) => {
-						console.error('Error downloading file:', err)
-						const msg = await ctx.reply(`<b>Произошла ошибка при сохранении файла. Попробуйте снова.</b>`, { parse_mode: "HTML" })
-						ctx.wizard.state.deleteMessages.push(msg.message_id);
-					})
+					const fileUrl = await ctx.telegram.getFileLink(file.file_id);
+					ctx.wizard.state.data.fileExplain = fileUrl;
+	
+					const user = await UserModel.findOne({ id: ctx.from.id });
+					const application = new ApplicationModel(ctx.wizard.state.data);
+					await application.save();
+					user.applications.push(application._id);
+					await user.save();
+					await ctx.reply(
+						`<b>Заявка №${application.normalId} создана!</b>\nВ ближайшее время мы сообщим\nВам время рассмотрения заявки`,
+						{
+							reply_markup: Markup.inlineKeyboard([
+								Markup.button.callback('Перейти к заявке', `?detailedApp_${application._id}`)
+							]).resize().reply_markup,
+							parse_mode: 'HTML',
+						}
+					);
+	
+					ctx.wizard.state.deleteMessages.forEach(item => ctx.deleteMessage(item));
+					ctx.scene.leave();
 				} catch (err) {
-					console.error('Error during file download:', err)
-					const msg = await ctx.reply(`<b>Произошла ошибка при сохранении файла. Попробуйте снова.</b>`, { parse_mode: "HTML" })
+					console.error('Error during file processing:', err);
+					const msg = await ctx.reply('<b>Произошла ошибка при сохранении файла. Попробуйте снова.</b>', { parse_mode: 'HTML' });
 					ctx.wizard.state.deleteMessages.push(msg.message_id);
 				}
 			}
 		} else {
-			await ctx.reply('Пожалуйста, отправьте файл.')
+			await ctx.reply('Пожалуйста, отправьте файл.');
 		}
 	}
 

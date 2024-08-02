@@ -13,15 +13,24 @@ const detailedApplication = (bot) => {
 
             let messageText = `Заявка №${application.normalId}\nСтатус: ${application.status}`
 
+            if (application.fileAct) {
+                messageText += `\nФайл акт: <a href="${application.fileAct}">Скачать акт</a>`
+            }
+            if (application.fileExplain) {
+                messageText += `\nФайл пояснения: <a href="${application.fileExplain}">Скачать пояснения</a>`
+            }
+
             if (application.fileAnswer.trim() !== '') {
-                messageText += `\n---\nКомментарии: ${application.comments}\nФайл:`
+                messageText += `\n---\nКомментарии: ${application.comments}\nФайл: ${application.fileAnswer}`
 
                 await ctx.editMessageText(
                     messageText,
                     {
                         reply_markup: Markup.inlineKeyboard([
-                            Markup.button.callback('Скачать', `download_file_${application._id}`)
-                        ]).resize().reply_markup
+                            [Markup.button.callback('Скачать файл ответа', `download_file_${application._id}`)],
+                            [Markup.button.callback('В меню заявок', `?myApplications`)]
+                        ]).resize().reply_markup,
+                        parse_mode: 'HTML'
                     }
                 )
             } else {
@@ -29,7 +38,8 @@ const detailedApplication = (bot) => {
                     {
                         reply_markup: Markup.inlineKeyboard([
                             Markup.button.callback('Вернуться назад', `?myApplications`)
-                        ]).resize().reply_markup
+                        ]).resize().reply_markup,
+                        parse_mode: 'HTML'
                     }
                 )
             }

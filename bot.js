@@ -9,6 +9,9 @@ import ApplyExistingApplication from './bot/scenes/apply_existing_app_scene.js';
 import listApplicationsAction from './bot/callbacks/applications/listApplicationsAction.js';
 import detailedApplication from './bot/callbacks/applications/detailedApplication.js';
 import downloadFile from './bot/callbacks/applications/downloadFile/downloadFile.js';
+import { getClarifications, reviewedApplication, setDateToAnswer } from './bot/api/user.js';
+import sendClarifications from './bot/callbacks/applications/clarifications/send-clarifications.js';
+import done from './bot/callbacks/applications/clarifications/done.js';
 
 dotenv.config();
 
@@ -27,7 +30,9 @@ const initBot = (app) => {
     is_registered(bot)
 
     // api
-
+    setDateToAnswer(app, bot)
+    reviewedApplication(app, bot)
+    getClarifications(app, bot)
 	// commands
     startCommand(bot)
 
@@ -37,6 +42,8 @@ const initBot = (app) => {
     listApplicationsAction(bot)
     detailedApplication(bot)
     downloadFile(bot)
+    sendClarifications(bot)
+    done(bot)
 
     bot.launch().then(() => {
         console.log('Bot is running');

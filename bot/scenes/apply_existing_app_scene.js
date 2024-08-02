@@ -157,7 +157,7 @@ const ApplyExistingApplication = new Scenes.WizardScene(
                             `<b>Заявка №${doc.normalId} оформлена!</b>\nВ ближайшее время мы сообщим\nВам время рассмотрения заявки`,
                             {
                                 reply_markup: Markup.inlineKeyboard([
-                                    Markup.button.callback('Перейти к заявке', `?application_${application._id}`)
+                                    Markup.button.callback('Перейти к заявке', `?detailedApp_${application._id}`)
                                 ]).resize().reply_markup,
                                 parse_mode: 'HTML',
                             }

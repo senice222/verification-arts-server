@@ -4,7 +4,7 @@ import checkAdmin from "../utils/checkAdmin.js";
 
 
 const AdminRoute = Router()
-// kabzda
+
 AdminRoute.post('/admin/create', adminService.createAdmin)
 AdminRoute.post('/admin/login', adminService.login)
 AdminRoute.get('/admin/me', checkAdmin, adminService.getMe)

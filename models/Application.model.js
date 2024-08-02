@@ -26,7 +26,7 @@ const ApplicationSchema = new mongoose.Schema(
         status: {
             type: String,
             required: true,
-            enum: ["В работе", "На уточнении", "Отклонена", "На рассмотрении"],
+            enum: ["В работе", "На уточнении", "Отклонена", "На рассмотрении", "Рассмотрена"],
             default: "На рассмотрении"
         },
         fileAct: {
@@ -36,6 +36,13 @@ const ApplicationSchema = new mongoose.Schema(
         fileExplain: {
             type: String,
             required: true
+        },
+        clarificationsAnswer: {
+            type: {
+                text: String,
+                files: [String]
+            },
+            default: {}
         },
         comments: {
             type: String,
