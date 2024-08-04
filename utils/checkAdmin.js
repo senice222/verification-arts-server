@@ -3,7 +3,7 @@ import AdminModel from "../models/Admin.model.js";
 
 const checkAdmin = async (req, res, next) => {
     const token = (req.headers.authorization || "").replace(/Bearer\s?/, "");
-    console.log(req.headers.authorization)
+
     if (!token) {
         return res.status(403).json({
             message: "Нет доступа, 1",

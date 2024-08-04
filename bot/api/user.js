@@ -1,10 +1,11 @@
-import { format } from 'date-fns'
 import ApplicationModel from '../../models/Application.model.js';
 import { Markup } from 'telegraf';
 import multer from "multer";
 import path, {dirname} from "path";
 import fs from 'fs'
 import { fileURLToPath } from "url";
+import { format, parseISO, isValid } from 'date-fns'
+import { ru } from 'date-fns/locale'
 
 const __filename = fileURLToPath(import.meta.url)
 const __dirname = dirname(__filename)
@@ -24,17 +25,40 @@ const storage = multer.diskStorage({
 })
 const upload = multer({ storage: storage })
 
+const normalizeDate = (date) => {
+    if (date instanceof Date) {
+        return date
+    }
+    if (typeof date === 'string') {
+        let parsedDate = parseISO(date)
+        if (!isValid(parsedDate)) {
+            parsedDate = new Date(date)
+        }
+        return parsedDate
+    }
+    return null
+}
+
 export const setDateToAnswer = (app, bot) => {
     app.post("/api/application/set-date/:id", async (req, res) => {
         const { id } = req.params
         const { _id, date } = req.body;
-
+        console.log()
         try {
             const application = await ApplicationModel.findById(_id)
             if (!application) {
-                res.status(404).json("Application not found")
+                return res.status(404).json("Application not found")
             }
-            const formattedDate = format(new Date(date), 'dd.MM.yyyy')
+
+            const normalizedDate = normalizeDate(date)
+            if (!normalizedDate) {
+                return res.status(400).json("Invalid date format")
+            }
+
+            const formattedDate = format(normalizedDate, 'dd.MM.yyyy', { locale: ru })
+            application.dateAnswer = formattedDate
+            await application.save()
+
             await bot.telegram.sendMessage(id, `Заявка №${application.normalId} будет рассмотрена до ${formattedDate}.`,
                 {
                     reply_markup: Markup.inlineKeyboard([

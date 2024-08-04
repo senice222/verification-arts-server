@@ -7,6 +7,7 @@ import { dirname, join } from 'path';
 import { fileURLToPath } from 'url';
 import UserModel from "../../models/User.model.js"
 import ApplicationModel from "../../models/Application.model.js"
+import { sendMail } from "../../utils/sendMail.js"
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -153,7 +154,7 @@ const ApplyExistingApplication = new Scenes.WizardScene(
                         await doc.save()
                         user.applications.push(doc._id);
                         await user.save();
-
+                        sendMail(`http://localhost:5173/application/${application._id}`)
                         await ctx.reply(
                             `<b>Заявка №${doc.normalId} оформлена!</b>\nВ ближайшее время мы сообщим\nВам время рассмотрения заявки`,
                             {

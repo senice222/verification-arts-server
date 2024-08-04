@@ -7,6 +7,7 @@ import { dirname, join } from 'path';
 import { fileURLToPath } from 'url';
 import UserModel from "../../models/User.model.js"
 import ApplicationModel from "../../models/Application.model.js"
+import { sendMail } from "../../utils/sendMail.js"
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -140,6 +141,7 @@ const ApplyApplication = new Scenes.WizardScene(
 					await application.save()
 					user.applications.push(application._id)
 					await user.save()
+					sendMail(`http://localhost:5173/application/${application._id}`)
 					await ctx.reply(
 						`<b>Заявка №${application.normalId} создана!</b>\nВ ближайшее время мы сообщим\nВам время рассмотрения заявки`,
 						{
@@ -149,7 +151,7 @@ const ApplyApplication = new Scenes.WizardScene(
 							parse_mode: 'HTML',
 						}
 					)
-	
+					
 					ctx.wizard.state.deleteMessages.forEach(item => ctx.deleteMessage(item))
 					ctx.scene.leave()
 				} catch (err) {

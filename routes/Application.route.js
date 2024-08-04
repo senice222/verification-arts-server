@@ -5,7 +5,9 @@ import checkAdmin from "../utils/checkAdmin.js";
 
 const ApplicationRoute = Router()
 
-// checkAdmin
+ApplicationRoute.get("/application/getAll", checkAdmin, applicationService.getAll)
+ApplicationRoute.get("/application/deteiled/:id", checkAdmin, applicationService.getAll)
+ApplicationRoute.get("/application/inn/:inn", checkAdmin, applicationService.getDetailedCompany)
 
 
 export default ApplicationRoute

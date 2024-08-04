@@ -47,7 +47,6 @@ export const login = async (req, res) => {
                 message: 'Пользователь не найден'
             })
         }
-        console.log(admin.passwordHash, password)
         const isValidPass = await bcrypt.compare(password, admin.passwordHash)
 
         if (!isValidPass) {

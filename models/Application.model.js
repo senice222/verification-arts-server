@@ -56,6 +56,10 @@ const ApplicationSchema = new mongoose.Schema(
             type: Boolean,
             default: false
         },
+        dateAnswer: {
+            type: String,
+            default: ""
+        },
         owner: {
             type: Number,
             required: true
