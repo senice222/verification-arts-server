@@ -51,7 +51,7 @@ const listApplicationsAction = (bot) => {
                 if (i !== pages.length - 1) navigationButtons.push({text: '>', callback_data: '?myApplications_' + (i + 1)});
                 if (i !== pages.length - 1) navigationButtons.push({text: '>>', callback_data: '?myApplications_' + String(pages.length-1)});
         
-                additionalButtons.push({text: `🔙 Назад`, callback_data: '?start'});
+                additionalButtons.push({text: `🔙 В главное меню`, callback_data: '?start'});
                 
                 return [...page, navigationButtons, additionalButtons];
             });

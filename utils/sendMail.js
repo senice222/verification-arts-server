@@ -12,9 +12,9 @@ const transporter = nodemailer.createTransport({
     },
 });
 
-export const sendMail = (link) => {
+export const sendMail = (text, link) => {
     const styledEmailContent = `
-    <h2>Новая заявка!</h2>
+    <h2>${text}!</h2>
     <p><strong>Ссылка на просмотр:</strong> <a href="${link}">Просмотреть</a></p>
 `
 

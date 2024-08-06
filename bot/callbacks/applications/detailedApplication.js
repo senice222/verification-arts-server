@@ -1,5 +1,6 @@
 import { Markup } from 'telegraf'
 import ApplicationModel from '../../../models/Application.model.js'
+import iconv from 'iconv-lite'
 
 const detailedApplication = (bot) => {
     bot.action([/\?detailedApp_(.+)/], async (ctx) => {
@@ -20,11 +21,12 @@ const detailedApplication = (bot) => {
                 messageText += `\nПояснения: <a href="${application.fileExplain}">скачать</a>`;
             }
 
-            if (application.fileAnswer && application.fileAnswer.length > 0) {
+            const validFiles = application.fileAnswer.filter(file => file.trim() !== '');
+
+            if (validFiles.length > 0) {
                 messageText += `\n---\n<b>Ответ по заявке:</b>\nКомментарии: ${application.comments || 'Нет комментариев'}\nФайлы:`;
-                application.fileAnswer.forEach(file => {
-                    const encodedFile = encodeURI(file);
-                    messageText += `\n<a href="${encodedFile}">Скачать ${file}</a>`;
+                validFiles.forEach(file => {
+                    messageText += `\n<a href="https://expample.com/${file}">Скачать ${file}</a>`;
                 });
 
                 await ctx.editMessageText(
@@ -52,6 +54,7 @@ const detailedApplication = (bot) => {
         }
     });
 };
+
 
 
 

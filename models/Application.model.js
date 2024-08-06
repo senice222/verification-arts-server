@@ -51,7 +51,7 @@ const ApplicationSchema = new mongoose.Schema(
         },
         fileAnswer: {
             type: [String],
-            default: ''
+            default: []
         },
         clarifications: {
             type: Boolean,

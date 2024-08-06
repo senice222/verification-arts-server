@@ -1,39 +1,37 @@
 import { Markup } from "telegraf"
 import ApplicationModel from "../../../../models/Application.model.js"
-
+import { sendMail } from "../../../../utils/sendMail.js";
 
 const done = (bot) => {
     bot.action([/done_(.+)/], async (ctx) => {
-        const applicationId = ctx.match[1]
+        const applicationId = ctx.match[1];
 
-        ctx.session.collectingClarifications = false
-
-        const clarifications = ctx.session.clarifications
+        ctx.session.collectingClarifications = false;
+        const clarifications = ctx.session.clarifications;
 
         try {
-            const application = await ApplicationModel.findById(applicationId)
+            const application = await ApplicationModel.findById(applicationId);
             if (!application) {
-                return ctx.reply('Application not found')
+                return ctx.reply('Application not found');
             }
-
-            const existingClarifications = application.clarificationsAnswer || { text: [], files: [] };
-
+            
             const newClarifications = clarifications.reduce((acc, item) => {
                 if (item.type === 'text') {
-                    acc.text.push(item.content)
+                    acc.text.push(item.content);
                 } else if (item.type === 'document' || item.type === 'photo') {
-                    acc.files.push(item.fileUrl.href)
+                    acc.files.push(item.fileUrl.href);
                 }
-                return acc
+                return acc;
             }, { text: [], files: [] });
 
             const combinedClarifications = {
-                text: `${existingClarifications.text}\n${newClarifications.text.join('\n')}`.trim(),
-                files: [...existingClarifications.files, ...newClarifications.files]
+                text: newClarifications.text.filter(Boolean).join('\n'),
+                files: newClarifications.files.filter(Boolean)
             };
 
-            application.status = "На рассмотрении"
+            application.status = "На рассмотрении";
             application.clarificationsAnswer = combinedClarifications;
+            sendMail(`Уточнения получены по заявке ${application.normalId}`, `http://localhost:5173/application/${application._id}`)
             await application.save();
 
             await ctx.reply(`Уточнения по заявке №${application.normalId} отправлены.`, {
@@ -44,8 +42,9 @@ const done = (bot) => {
         } catch (e) {
             console.log("Error:", e);
             ctx.reply('Произошла ошибка при обработке уточнений.');
-        } 
-        ctx.session.clarifications = []
-    })
+        }
+
+        ctx.session.clarifications = [];
+    });
 }
 export default done

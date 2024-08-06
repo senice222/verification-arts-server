@@ -6,6 +6,7 @@ import fs from 'fs'
 import { fileURLToPath } from "url";
 import { format, parseISO, isValid } from 'date-fns'
 import { ru } from 'date-fns/locale'
+import iconv from 'iconv-lite'
 
 const __filename = fileURLToPath(import.meta.url)
 const __dirname = dirname(__filename)
@@ -20,7 +21,8 @@ const storage = multer.diskStorage({
         cb(null, uploadDirectory)
     },
     filename: function (req, file, cb) {
-        cb(null, file.originalname)
+        const fileName = iconv.decode(Buffer.from(file.originalname, 'binary'), 'utf-8')
+        cb(null, fileName);
     }
 })
 const upload = multer({ storage: storage })
@@ -43,7 +45,6 @@ export const setDateToAnswer = (app, bot) => {
     app.post("/api/application/set-date/:id", async (req, res) => {
         const { id } = req.params
         const { _id, date } = req.body;
-        console.log()
         try {
             const application = await ApplicationModel.findById(_id)
             if (!application) {
@@ -57,6 +58,7 @@ export const setDateToAnswer = (app, bot) => {
 
             const formattedDate = format(normalizedDate, 'dd.MM.yyyy', { locale: ru })
             application.dateAnswer = formattedDate
+            application.status = "В работе"
             application.history.push({ label: `Установлен срок ответа: до ${formattedDate}` })
             await application.save()
 
@@ -138,45 +140,44 @@ export const closeApplication = (app, bot) => {
 
 export const reviewedApplication = (app, bot) => {
     app.put("/api/application/reviewed/:id", upload.array('files'), async (req, res) => {
-      const { id } = req.params
-      const { _id, status, comments } = req.body;
-      const files = req.files.map(file => file.filename);
+        const { id } = req.params
+        const { _id, status, comments } = req.body;
+        const files = req.files.map(file => file.filename);
 
-      try {
-        const updateData = { status, fileAnswer: files };
-        if (comments) {
-          updateData.comments = comments;
+        try {
+            const updateData = { status, fileAnswer: files };
+            if (comments) {
+                updateData.comments = comments;
+            }
+            console.log(files)
+            const application = await ApplicationModel.findByIdAndUpdate(
+                _id,
+                { $set: updateData },
+                { new: true }
+            );
+            if (!application) {
+                return res.status(404).json({ message: 'Application not found' });
+            }
+            application.status = "Рассмотрена"
+            await application.save();
+            const messageText = `Заявка №${application.normalId} ${status}!${status === 'Рассмотрена' ? '\nПерейдите на страницу заявки,\nчтобы увидеть ответ.' : ''}`;
+
+            await bot.telegram.sendMessage(id, messageText,
+                {
+                    reply_markup: Markup.inlineKeyboard([
+                        Markup.button.callback('Перейти к заявке', `?detailedApp_${application._id}`)
+                    ]).resize().reply_markup
+                }
+            );
+
+            res.status(200).send('Message sent successfully');
+        } catch (error) {
+            console.error('Error sending message:', error);
+            res.status(500).send('Failed to send message');
         }
-  
-        const application = await ApplicationModel.findByIdAndUpdate(
-          _id,
-          { $set: updateData },
-          { new: true }
-        );
-  
-        if (!application) {
-          return res.status(404).json({ message: 'Application not found' });
-        }
-        application.status = "Рассмотрена"
-        await application.save();
-        const messageText = `Заявка №${application.normalId} ${status}!${status === 'Рассмотрена' ? '\nПерейдите на страницу заявки,\nчтобы увидеть ответ.' : ''}`;
-        
-        await bot.telegram.sendMessage(id, messageText,
-          {
-            reply_markup: Markup.inlineKeyboard([
-              Markup.button.callback('Перейти к заявке', `?detailedApp_${application._id}`)
-            ]).resize().reply_markup
-          }
-        );
-  
-        res.status(200).send('Message sent successfully');
-      } catch (error) {
-        console.error('Error sending message:', error);
-        res.status(500).send('Failed to send message');
-      }
     });
-  };
-  
+};
+
 
 export const getClarifications = (app, bot) => {
     app.post("/api/application/get-clarifications/:id", upload.array('files'), async (req, res) => {
@@ -205,9 +206,9 @@ export const getClarifications = (app, bot) => {
                 {
                     reply_markup: Markup.inlineKeyboard(
                         fileUrls.map((fileUrl, index) =>
-                            [Markup.button.url(`Файл ${index + 1}`, fileUrl)] 
+                            [Markup.button.url(`Файл ${index + 1}`, fileUrl)]
                         ).concat(
-                            [[Markup.button.callback('Отправить уточнение', `clarify_${application._id}`)]] 
+                            [[Markup.button.callback('Отправить уточнение', `clarify_${application._id}`)]]
                         )
                     ).resize().reply_markup
                 }
