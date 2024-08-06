@@ -15,34 +15,36 @@ const done = (bot) => {
             if (!application) {
                 return ctx.reply('Application not found')
             }
-            const result = clarifications.reduce((acc, item) => {
+
+            const existingClarifications = application.clarificationsAnswer || { text: [], files: [] };
+
+            const newClarifications = clarifications.reduce((acc, item) => {
                 if (item.type === 'text') {
                     acc.text.push(item.content)
                 } else if (item.type === 'document' || item.type === 'photo') {
                     acc.files.push(item.fileUrl.href)
                 }
                 return acc
-            }, { text: [], files: [] })
-            
-            const textAnswer = result.text.join('\n')
-            const obj = {
-                text: textAnswer,
-                files: result.files
-            }
-        
-            application.clarificationsAnswer = obj
-            await application.save()
+            }, { text: [], files: [] });
+
+            const combinedClarifications = {
+                text: `${existingClarifications.text}\n${newClarifications.text.join('\n')}`.trim(),
+                files: [...existingClarifications.files, ...newClarifications.files]
+            };
+
+            application.status = "На рассмотрении"
+            application.clarificationsAnswer = combinedClarifications;
+            await application.save();
 
             await ctx.reply(`Уточнения по заявке №${application.normalId} отправлены.`, {
                 reply_markup: Markup.inlineKeyboard([
                     Markup.button.callback('Перейти к заявке', `?detailedApp_${applicationId}`)
                 ]).resize().reply_markup
-            })
-        } catch (error) {
-            console.error('Error saving clarifications:', error)
-            await ctx.reply('Error saving clarifications')
-        }
-
+            });
+        } catch (e) {
+            console.log("Error:", e);
+            ctx.reply('Произошла ошибка при обработке уточнений.');
+        } 
         ctx.session.clarifications = []
     })
 }

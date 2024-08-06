@@ -19,7 +19,7 @@ const checkAdmin = async (req, res, next) => {
             });
         }
         req.userId = _id;
-        req.role = admin.role
+        req.access = admin.access
         next();
     } catch (err) {
         console.log(err)

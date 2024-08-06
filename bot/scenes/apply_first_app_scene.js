@@ -11,6 +11,7 @@ import { sendMail } from "../../utils/sendMail.js"
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
+const filePath = path.join(__dirname, '../../utils/ПАМЯТКА.docx');
 
 const baseDirectory = join(__dirname, '..', '..', 'api', 'uploads');
 
@@ -57,13 +58,14 @@ const ApplyApplication = new Scenes.WizardScene(
 		try {
 			if (ctx.updateType === 'message') {
 				ctx.wizard.state.data['inn'] = ctx.message.text;
-				const msg = await ctx.reply(
-					'Памятка (файл + текст)',
-					Markup.inlineKeyboard([
+				const fileMsg = await ctx.replyWithDocument({ source: filePath }, {
+					caption: 'Памятка',
+					reply_markup: Markup.inlineKeyboard([
 						Markup.button.callback('Ознакомлен', '?acknowledge')
-					]).resize()
-				);
-				ctx.wizard.state.deleteMessages.push(msg.message_id);
+					]).resize().reply_markup
+				});
+	
+				ctx.wizard.state.deleteMessages.push(fileMsg.message_id);
 				ctx.wizard.next();
 			} else {
 				await ctx.reply('Пожалуйста, введите ИНН компании.');
@@ -76,7 +78,6 @@ const ApplyApplication = new Scenes.WizardScene(
 		if (ctx.updateType === 'callback_query') {
 			if (ctx.update.callback_query.data === '?acknowledge') {
 				ctx.wizard.state.data.accepted = true;
-				await ctx.editMessageText('Вы ознакомились.');
 				const msg = await ctx.reply(
 					`<b>⚙️ Отправьте файл акта:</b>`,
 					{

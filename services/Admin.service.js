@@ -1,9 +1,37 @@
 import AdminModel from "../models/Admin.model.js";
 import bcrypt, {genSalt, hash} from "bcrypt";
 import jwt from "jsonwebtoken";
+// const [mail, setMail] = useState(false)
+// const [application, setApplication] = useState(false)
+// const [company, setCompany] = useState(false)
+// const [roles, setRoles] = useState(false)
+export const getAdmins = async (req, res) => {
+    try {
+        const access = req.access
+        console.log(access, 22)
+        if (!access?.includes('Настройки')) {
+            return res.status(403).json({message: "Недостаточно прав доступа"})
+        }
+        const admins = await AdminModel.find()
+
+        return res.json(admins)
+    } catch (e) {
+        console.log(e)
+        res.status(500).json({
+            message: 'Не удалось создать продукт',
+        });
+    }
+}
 
 export const createAdmin = async (req, res) => {
-    const {login, password, role} = req.body
+    const {login, access, fio, comment, password} = req.body
+    const access2 = req.access
+    console.log(access2, 24)
+
+    if (!access2?.includes('Настройки')) {
+        return res.status(403).json({message: "Недостаточно прав доступа"})
+    }
+    
     try {
         const mbAdmin = await AdminModel.findOne({login})
 
@@ -13,9 +41,11 @@ export const createAdmin = async (req, res) => {
         const salt = await genSalt(10);
         const hashedPassword = await hash(password, salt);
         const doc = new AdminModel({
-            login: login,
+            login,
+            access,
+            fio,
             passwordHash: hashedPassword,
-            role: role
+            comment,
         })
 
         const admin = await doc.save()
@@ -28,7 +58,10 @@ export const createAdmin = async (req, res) => {
                 expiresIn: '15d'
             }
         )
-        res.status(200).json({token, admin})
+        
+        const admins = await AdminModel.find()
+
+        return res.json(admins)
     } catch (e) {
         res.status(500).json({message: 'Ошибка создания админа'})
         console.log(e)
@@ -87,6 +120,53 @@ export const getMe = async (req, res) => {
     const {passwordHash, ...userData} = user._doc
 
     res.json(userData)
+}
+export const deleteAdmin = async (req, res) => {
+    const {id} = req.params
+    const access2 = req.access
+
+    if (!access2?.includes('Настройки')) {
+        return res.status(403).json({message: "Недостаточно прав доступа"})
+    }
+    const user = await AdminModel.findByIdAndDelete(id)
+    if (!user) {
+        return res.status(404).json({
+            message: 'Пользователь не найден',
+        })
+    }
+
+    
+
+    const admins = await AdminModel.find()
+    return res.json(admins)
+}
+export const changeAdmin = async (req, res) => {
+    const {id} = req.params
+    const {login, access, fio, comment, password} = req.body
+    const access2 = req.access
+
+    if (!access2?.includes('Настройки')) {
+        return res.status(403).json({message: "Недостаточно прав доступа"})
+    }
+    const user = await AdminModel.findById(id)
+    if (!user) {
+        return res.status(404).json({
+            message: 'Пользователь не найден',
+        })
+    }
+    user.login = login
+    user.access = access
+    user.fio = fio
+    user.comment = comment
+
+    await user.save()
+
+ 
+
+    
+
+    const admins = await AdminModel.find()
+    return res.json(admins)
 }
 export const changeUserPassword = async (req, res) => {
     const {oldPassword, newPassword} = req.body

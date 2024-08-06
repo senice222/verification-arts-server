@@ -5,6 +5,7 @@ import initBot from "./bot.js"
 import express from "express";
 import cors from "cors";
 import path from "path";
+import bodyParser from 'body-parser';
 
 dotenv.config()
 mongoose.connect
@@ -15,6 +16,9 @@ mongoose.connect
         router.use(express.json())
         router.use(cors())
         const __dirname = path.resolve();
+        router.use(bodyParser.urlencoded({ extended: true, limit: '50mb' }));
+        router.use(express.json({ limit: '50mb' }));
+        router.use(express.urlencoded({ limit: '50mb' }));
         router.use('/api/uploads', express.static(path.join(__dirname, 'api/uploads')));
 
         startServer(router)

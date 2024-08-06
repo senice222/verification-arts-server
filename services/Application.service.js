@@ -2,6 +2,11 @@ import ApplicationModel from "../models/Application.model.js"
 
 export const getAll = async (req, res) => {
     try {
+        const access = req.access
+
+        if (!access?.includes('Заявки')) {
+            return res.status(403).json({message: "Недостаточно прав доступа"})
+        }
         const applications = await ApplicationModel.find({})
         if (!applications) {
             return res.status(404).json({
@@ -17,6 +22,11 @@ export const getAll = async (req, res) => {
 export const getDetailed = async (req, res) => {
     const {id} = req.params
     try {
+        const access = req.access
+
+        if (!access?.includes('Заявки')) {
+            return res.status(403).json({message: "Недостаточно прав доступа"})
+        }
         const application = await ApplicationModel.findById(id)
         if (!application) {
             return res.status(404).json({
@@ -29,10 +39,15 @@ export const getDetailed = async (req, res) => {
     }
 }
 
+
 export const getDetailedCompany = async (req, res) => {
     const { inn } = req.params
+    const access = req.access
 
     try {
+        if (!access?.includes('Компании')) {
+            return res.status(403).json({message: "Недостаточно прав доступа"})
+        }
         const application = await ApplicationModel.find({ inn })
         
         if (!application) {
