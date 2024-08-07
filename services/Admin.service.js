@@ -1,14 +1,10 @@
 import AdminModel from "../models/Admin.model.js";
 import bcrypt, {genSalt, hash} from "bcrypt";
 import jwt from "jsonwebtoken";
-// const [mail, setMail] = useState(false)
-// const [application, setApplication] = useState(false)
-// const [company, setCompany] = useState(false)
-// const [roles, setRoles] = useState(false)
+
 export const getAdmins = async (req, res) => {
     try {
         const access = req.access
-        console.log(access, 22)
         if (!access?.includes('Настройки')) {
             return res.status(403).json({message: "Недостаточно прав доступа"})
         }
@@ -26,7 +22,6 @@ export const getAdmins = async (req, res) => {
 export const createAdmin = async (req, res) => {
     const {login, access, fio, comment, password} = req.body
     const access2 = req.access
-    console.log(access2, 24)
 
     if (!access2?.includes('Настройки')) {
         return res.status(403).json({message: "Недостаточно прав доступа"})
@@ -135,7 +130,6 @@ export const deleteAdmin = async (req, res) => {
         })
     }
 
-    
 
     const admins = await AdminModel.find()
     return res.json(admins)
@@ -160,10 +154,6 @@ export const changeAdmin = async (req, res) => {
     user.comment = comment
 
     await user.save()
-
- 
-
-    
 
     const admins = await AdminModel.find()
     return res.json(admins)

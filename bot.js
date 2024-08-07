@@ -9,7 +9,7 @@ import ApplyExistingApplication from './bot/scenes/apply_existing_app_scene.js';
 import listApplicationsAction from './bot/callbacks/applications/listApplicationsAction.js';
 import detailedApplication from './bot/callbacks/applications/detailedApplication.js';
 import downloadFile from './bot/callbacks/applications/downloadFile/downloadFile.js';
-import { changeStatus, closeApplication, getClarifications, reviewedApplication, setDateToAnswer } from './bot/api/user.js';
+import { changeStatus, closeApplication, deleteApplication, getClarifications, reviewedApplication, setDateToAnswer } from './bot/api/user.js';
 import sendClarifications from './bot/callbacks/applications/clarifications/send-clarifications.js';
 import done from './bot/callbacks/applications/clarifications/done.js';
 
@@ -35,8 +35,8 @@ const initBot = (app) => {
     getClarifications(app, bot)
     changeStatus(app, bot)
     closeApplication(app, bot)
-    
-	// commands
+    deleteApplication(app, bot)
+	// commands 
     startCommand(bot)
 
 	// callbacks    

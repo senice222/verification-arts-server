@@ -5,7 +5,6 @@ import { sendMail } from "../../../../utils/sendMail.js";
 const done = (bot) => {
     bot.action([/done_(.+)/], async (ctx) => {
         const applicationId = ctx.match[1];
-
         ctx.session.collectingClarifications = false;
         const clarifications = ctx.session.clarifications;
 
@@ -25,12 +24,12 @@ const done = (bot) => {
             }, { text: [], files: [] });
 
             const combinedClarifications = {
-                text: newClarifications.text.filter(Boolean).join('\n'),
-                files: newClarifications.files.filter(Boolean)
+                text: newClarifications.text.join('\n'),
+                files: newClarifications.files
             };
-
             application.status = "На рассмотрении";
-            application.clarificationsAnswer = combinedClarifications;
+            application.history.push({ label: "Ответ на уточнение" });
+            application.history.push({combinedClarifications, status: "answer"})
             sendMail(`Уточнения получены по заявке ${application.normalId}`, `http://localhost:5173/application/${application._id}`)
             await application.save();
 

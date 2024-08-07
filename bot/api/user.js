@@ -7,6 +7,7 @@ import { fileURLToPath } from "url";
 import { format, parseISO, isValid } from 'date-fns'
 import { ru } from 'date-fns/locale'
 import iconv from 'iconv-lite'
+import UserModel from '../../models/User.model.js';
 
 const __filename = fileURLToPath(import.meta.url)
 const __dirname = dirname(__filename)
@@ -40,6 +41,31 @@ const normalizeDate = (date) => {
     }
     return null
 }
+
+export const deleteApplication = (app, bot) => {
+    app.delete("/api/application/delete/:id", async (req, res) => {
+        const { id } = req.params
+        const { _id } = req.body;
+        try {
+            const application = await ApplicationModel.findByIdAndDelete(_id)
+            const user = await UserModel.findOne({id})
+            user.applications.filter(item => item !== _id)
+            await user.save()
+            await bot.telegram.sendMessage(id, `Заявка №${application.normalId} удалена.`,
+                {
+                    reply_markup: Markup.inlineKeyboard([
+                        Markup.button.callback('В главное меню', `?start`)
+                    ]).resize().reply_markup
+                }
+            );
+
+            res.status(200).send('Message sent successfully');
+        } catch (error) {
+            console.error('Error sending message:', error);
+            res.status(500).send('Failed to send message');
+        }
+    });
+};
 
 export const setDateToAnswer = (app, bot) => {
     app.post("/api/application/set-date/:id", async (req, res) => {
@@ -181,43 +207,46 @@ export const reviewedApplication = (app, bot) => {
 
 export const getClarifications = (app, bot) => {
     app.post("/api/application/get-clarifications/:id", upload.array('files'), async (req, res) => {
-        const { id } = req.params
-        const { _id, text } = req.body
+        const { id } = req.params;
+        const { _id, text } = req.body;
         const files = req.files || [];
+    
         try {
-            const application = await ApplicationModel.findById(_id)
+            const application = await ApplicationModel.findById(_id);
             if (!application) {
-                return res.status(404).json("Application not found")
+                return res.status(404).json("Application not found");
             }
-
-            const fileUrls = files.map(file => `https://yourdomain.com/${file.originalname}`)
-            application.status = "На уточнении"
-            application.history.push({ label: `Заявка передана на уточнение` })
-            application.history.push({ label: `Статус заявки сменен на На уточнении` })
-
-            let messageText = `По заявке №${application.normalId} требуются\nуточнения:\n---\n${text}`
+    
+            const fileUrls = files.map(file => `https://yourdomain.com/${file.filename}`);
+    
+    
+            application.status = "На уточнении";
+            application.history.push({ label: "Заявка передана на уточнение" });
+            application.history.push({ label: "Статус заявки сменен на На уточнении" });
+            if (text) {
+                application.history.push({ label: text, type: "comment" });
+            }
+            await application.save();
+    
+            let messageText = `По заявке №${application.normalId} требуются уточнения:\n---\n${text}`;
             if (fileUrls.length > 0) {
-                messageText += `\n\nФайлы уточнений:`
+                messageText += `\n\nФайлы уточнений:`;
+                fileUrls.forEach((fileUrl, index) => {
+                    messageText += `\n<a href="${fileUrl}">Файл ${index + 1}</a>`;
+                });
             }
-
-            await application.save()
-
-            await bot.telegram.sendMessage(id, messageText,
-                {
-                    reply_markup: Markup.inlineKeyboard(
-                        fileUrls.map((fileUrl, index) =>
-                            [Markup.button.url(`Файл ${index + 1}`, fileUrl)]
-                        ).concat(
-                            [[Markup.button.callback('Отправить уточнение', `clarify_${application._id}`)]]
-                        )
-                    ).resize().reply_markup
-                }
-            )
-
-            res.status(200).send('Message sent successfully')
+    
+            await bot.telegram.sendMessage(id, messageText, {
+                parse_mode: 'HTML',
+                reply_markup: Markup.inlineKeyboard([
+                    Markup.button.callback('Отправить уточнение', `clarify_${application._id}_${text}`)
+                ]).resize().reply_markup
+            });
+    
+            res.status(200).send('Message sent successfully');
         } catch (e) {
-            console.log("clarifications:", e)
-            res.status(500).send('Error processing request')
+            console.log("clarifications:", e);
+            res.status(500).send('Error processing request');
         }
-    })
+    });
 }

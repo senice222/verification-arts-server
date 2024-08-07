@@ -39,11 +39,14 @@ const ApplicationSchema = new mongoose.Schema(
             required: true
         },
         clarificationsAnswer: {
-            type: {
-                text: String,
-                files: [String]
-            },
-            default: {}
+            type: [
+                {
+                    text: String,
+                    files: [String],
+                    date: { type: Date, default: Date.now }
+                }
+            ],
+            default: []
         },
         comments: {
             type: String,

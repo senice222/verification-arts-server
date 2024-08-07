@@ -22,9 +22,11 @@ const detailedApplication = (bot) => {
             }
 
             const validFiles = application.fileAnswer.filter(file => file.trim() !== '');
-
+            if (application.comments) (
+                messageText += `\n---\n<b>Ответ по заявке:</b>\nКомментарии: ${application.comments || 'Нет комментариев'}`
+            )
             if (validFiles.length > 0) {
-                messageText += `\n---\n<b>Ответ по заявке:</b>\nКомментарии: ${application.comments || 'Нет комментариев'}\nФайлы:`;
+                messageText += `\nФайлы:`;
                 validFiles.forEach(file => {
                     messageText += `\n<a href="https://expample.com/${file}">Скачать ${file}</a>`;
                 });

@@ -10,9 +10,8 @@ const uploadPath = path.join(__dirname, '../../../../api/uploads')
 const upload = multer({ dest: uploadPath })
 
 const sendClarifications = (bot) => {
-    bot.action([/clarify_(.+)/], async (ctx) => {
+    bot.action([/clarify_(.+)_(.+)/], async (ctx) => {
         const applicationId = ctx.match[1]
-
         await ctx.reply(`Отправьте уточнения в этот чат. Можно отправить как текст, так и файлы. Как закончите отправлять, нажмите "Готово".`, {
             reply_markup: Markup.inlineKeyboard([
                 Markup.button.callback('Готово', `done_${applicationId}`)
