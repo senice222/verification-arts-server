@@ -13,7 +13,9 @@ const detailedApplication = (bot) => {
             }
 
             let messageText = `<b>Заявка №${application.normalId}</b>\nСтатус: ${application.status}\n-\n<b>Приложенные файлы:</b>`;
-
+            if (application.dateAnswer) {
+                messageText += `\nДата ответа: ${application.dateAnswer}`;
+            }
             if (application.fileAct) {
                 messageText += `\nАкт: <a href="${application.fileAct}">скачать</a>`;
             }
