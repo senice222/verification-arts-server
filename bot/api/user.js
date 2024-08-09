@@ -217,7 +217,7 @@ export const getClarifications = (app, bot) => {
                 return res.status(404).json("Application not found");
             }
 
-            const fileUrls = files.map(file => `https://yourdomain.com/${file.filename}`);
+            const fileUrls = files.map(file => `https://kvik.cc/api/uploads/${file.filename}`);
 
 
             application.status = "На уточнении";
