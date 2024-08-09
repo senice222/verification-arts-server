@@ -135,7 +135,7 @@ const ApplyApplication = new Scenes.WizardScene(
 				await application.save()
 				user.applications.push(application._id)
 				await user.save()
-				sendMail('Новая заявка!', `http://localhost:5173/application/${application._id}`)
+				sendMail(application, `https://kvik.cc/application/${application._id}`, 'new')
 				await ctx.reply(
 					`<b>Заявка №${application.normalId} создана!</b>\nВ ближайшее время мы сообщим\nВам время рассмотрения заявки`,
 					{

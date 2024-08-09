@@ -12,16 +12,26 @@ const transporter = nodemailer.createTransport({
     },
 });
 
-export const sendMail = (text, link) => {
+export const sendMail = (application, link, type) => {
+    const subject = type === 'clarification'
+        ? `Поступили уточнения по заявке №${application.normalId}`
+        : `Поступила новая заявка №${application.normalId}`
+
+    const bodyText = type === 'clarification'
+        ? `Поступили уточнения по заявке №${application.normalId}:`
+        : `Поступила новая заявка №${application.normalId}:`
+
     const styledEmailContent = `
-    <h2>${text}!</h2>
-    <p><strong>Ссылка на просмотр:</strong> <a href="${link}">Просмотреть</a></p>
+    <p><strong>${bodyText}</strong></p>
+    <p>Компания: ${application.name}</p>
+    <p>ИНН: ${application.inn}</p>
+    <p>Для просмотра ${type === 'clarification' ? 'уточнений и ответа' : 'заявки и ответа'} на заявку перейдите в админ панель: <a href="${link}">ОТКРЫТЬ</a></p>
 `
 
     const mailOptions = {
-        from: '"Новая заявка" <n.socialmedia12@gmail.com>',
+        from: '"Ответ на акты" <n.socialmedia12@gmail.com>',
         to: process.env.RECEIVER,
-        subject: 'Новая заявка!',
+        subject,
         html: styledEmailContent
     }
 

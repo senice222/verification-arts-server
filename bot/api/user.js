@@ -48,7 +48,7 @@ export const deleteApplication = (app, bot) => {
         const { _id } = req.body;
         try {
             const application = await ApplicationModel.findByIdAndDelete(_id)
-            const user = await UserModel.findOne({id})
+            const user = await UserModel.findOne({ id })
             user.applications.filter(item => item !== _id)
             await user.save()
             await bot.telegram.sendMessage(id, `Заявка №${application.normalId} удалена.`,
@@ -208,26 +208,30 @@ export const reviewedApplication = (app, bot) => {
 export const getClarifications = (app, bot) => {
     app.post("/api/application/get-clarifications/:id", upload.array('files'), async (req, res) => {
         const { id } = req.params;
-        const { _id, text } = req.body;
+        const { _id, text, admin } = req.body;
         const files = req.files || [];
-    
+
         try {
             const application = await ApplicationModel.findById(_id);
             if (!application) {
                 return res.status(404).json("Application not found");
             }
-    
+
             const fileUrls = files.map(file => `https://yourdomain.com/${file.filename}`);
-    
-    
+
+
             application.status = "На уточнении";
             application.history.push({ label: "Заявка передана на уточнение" });
             application.history.push({ label: "Статус заявки сменен на На уточнении" });
             if (text) {
-                application.history.push({ label: text, type: "comment" });
+                const historyEntry = { label: text, admin, type: "comment" };
+                if (fileUrls.length > 0) {
+                    historyEntry.fileUrls = fileUrls;
+                }
+                application.history.push(historyEntry);
             }
             await application.save();
-    
+
             let messageText = `По заявке №${application.normalId} требуются уточнения:\n---\n${text}`;
             if (fileUrls.length > 0) {
                 messageText += `\n\nФайлы уточнений:`;
@@ -235,14 +239,14 @@ export const getClarifications = (app, bot) => {
                     messageText += `\n<a href="${fileUrl}">Файл ${index + 1}</a>`;
                 });
             }
-    
+
             await bot.telegram.sendMessage(id, messageText, {
                 parse_mode: 'HTML',
                 reply_markup: Markup.inlineKeyboard([
                     Markup.button.callback('Отправить уточнение', `clarify_${application._id}_${text}`)
                 ]).resize().reply_markup
             });
-    
+
             res.status(200).send('Message sent successfully');
         } catch (e) {
             console.log("clarifications:", e);

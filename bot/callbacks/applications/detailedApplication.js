@@ -30,7 +30,7 @@ const detailedApplication = (bot) => {
             if (validFiles.length > 0) {
                 messageText += `\nФайлы:`;
                 validFiles.forEach(file => {
-                    messageText += `\n<a href="https://expample.com/${file}">Скачать ${file}</a>`;
+                    messageText += `\n<a href="https://kvik.cc/api/uploads/${file}">Скачать ${file}</a>`;
                 });
 
                 await ctx.editMessageText(
