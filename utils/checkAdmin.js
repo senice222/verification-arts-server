@@ -20,6 +20,7 @@ const checkAdmin = async (req, res, next) => {
         }
         req.userId = _id;
         req.access = admin.access
+        req.super = admin.superAdmin
         next();
     } catch (err) {
         console.log(err)

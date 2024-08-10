@@ -27,7 +27,6 @@ export const getDetailed = async (req, res) => {
         if (!access?.includes('Заявки')) {
             return res.status(403).json({message: "Недостаточно прав доступа"})
         }
-        console.log(id)
         const application = await ApplicationModel.findById(id)
         if (!application) {
             return res.status(404).json({

@@ -4,9 +4,10 @@ import jwt from "jsonwebtoken";
 
 export const getAdmins = async (req, res) => {
     try {
-        const access = req.access
-        if (!access?.includes('Настройки')) {
-            return res.status(403).json({message: "Недостаточно прав доступа"})
+        const access2 = req.super
+
+        if (!access2) {
+        return res.status(403).json({message: "Недостаточно прав доступа"})
         }
         const admins = await AdminModel.find()
 
@@ -20,10 +21,10 @@ export const getAdmins = async (req, res) => {
 }
 
 export const createAdmin = async (req, res) => {
-    const {login, access, fio, comment, password} = req.body
-    const access2 = req.access
+    const {login, access, comment, password, superAdmin} = req.body
+    const access2 = req.super
 
-    if (!access2?.includes('Настройки')) {
+    if (!access2) {
         return res.status(403).json({message: "Недостаточно прав доступа"})
     }
     
@@ -33,13 +34,11 @@ export const createAdmin = async (req, res) => {
         if (mbAdmin) {
             return res.status(500).json({message: "Такой логин уже зарегистрирован"})
         }
-        const salt = await genSalt(10);
-        const hashedPassword = await hash(password, salt);
         const doc = new AdminModel({
             login,
             access,
-            fio,
-            passwordHash: hashedPassword,
+            superAdmin,
+            passwordHash: password,
             comment,
         })
 
@@ -75,7 +74,7 @@ export const login = async (req, res) => {
                 message: 'Пользователь не найден'
             })
         }
-        const isValidPass = await bcrypt.compare(password, admin.passwordHash)
+        const isValidPass = password === admin.passwordHash
 
         if (!isValidPass) {
             return res.status(404).json({
@@ -118,10 +117,15 @@ export const getMe = async (req, res) => {
 }
 export const deleteAdmin = async (req, res) => {
     const {id} = req.params
-    const access2 = req.access
+    const access2 = req.super
 
-    if (!access2?.includes('Настройки')) {
+    if (!access2) {
         return res.status(403).json({message: "Недостаточно прав доступа"})
+    }
+    const admin = await AdminModel.findById(id)
+
+    if (admin.superAdmin) {
+        return res.status(403).json({message: "Вы не можете удалить супер-админа"})
     }
     const user = await AdminModel.findByIdAndDelete(id)
     if (!user) {
@@ -136,10 +140,10 @@ export const deleteAdmin = async (req, res) => {
 }
 export const changeAdmin = async (req, res) => {
     const {id} = req.params
-    const {login, access, fio, comment, password} = req.body
-    const access2 = req.access
+    const {access, fio, comment, password, superAdmin} = req.body
+    const access2 = req.super
 
-    if (!access2?.includes('Настройки')) {
+    if (!access2) {
         return res.status(403).json({message: "Недостаточно прав доступа"})
     }
     const user = await AdminModel.findById(id)
@@ -148,10 +152,9 @@ export const changeAdmin = async (req, res) => {
             message: 'Пользователь не найден',
         })
     }
-    user.login = login
     user.access = access
-    user.fio = fio
     user.comment = comment
+    user.superAdmin = superAdmin
 
     await user.save()
 

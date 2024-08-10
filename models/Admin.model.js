@@ -2,15 +2,12 @@ import mongoose from 'mongoose';
 
 const AdminSchema = new mongoose.Schema(
     {
-        fio: {
-            type: String,
-            required: true
-        },
         login: {
             type: String,
             required: true
         },
         access: [String],
+        superAdmin: true,
         passwordHash: {
             type: String,
             required: true
@@ -18,7 +15,12 @@ const AdminSchema = new mongoose.Schema(
         comment: {
             type: String,
             default: '',
+        },
+        superAdmin: {
+            type: Boolean,
+            default: false
         }
+
     }
 );
 
