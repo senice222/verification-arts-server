@@ -31,11 +31,11 @@ const ApplicationSchema = new mongoose.Schema(
         },
         history: [],
         fileAct: {
-            type: String,
+            type: [],
             required: true,
         },
         fileExplain: {
-            type: String,
+            type: [],
             required: true
         },
         clarificationsAnswer: {

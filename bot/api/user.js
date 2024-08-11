@@ -69,32 +69,30 @@ export const deleteApplication = (app, bot) => {
 
 export const setDateToAnswer = (app, bot) => {
     app.post("/api/application/set-date/:id", async (req, res) => {
-        const { id } = req.params
+        const { id } = req.params;
         const { _id, date } = req.body;
         try {
-            const application = await ApplicationModel.findById(_id)
+            const application = await ApplicationModel.findById(_id);
             if (!application) {
-                return res.status(404).json("Application not found")
+                return res.status(404).json("Application not found");
             }
 
-            const normalizedDate = normalizeDate(date)
+            const normalizedDate = normalizeDate(date);
             if (!normalizedDate) {
-                return res.status(400).json("Invalid date format")
+                return res.status(400).json("Invalid date format");
             }
 
-            const formattedDate = format(normalizedDate, 'dd.MM.yyyy', { locale: ru })
-            application.dateAnswer = formattedDate
-            application.status = "В работе"
-            application.history.push({ label: `Установлен срок ответа: до ${formattedDate}` })
-            await application.save()
+            const formattedDate = format(normalizedDate, 'dd.MM.yyyy', { locale: ru });
+            application.dateAnswer = formattedDate;
+            application.status = "В работе";
+            application.history.push({ label: `Установлен срок ответа: до ${formattedDate}` });
+            await application.save();
 
-            await bot.telegram.sendMessage(id, `Заявка №${application.normalId} будет рассмотрена до ${formattedDate}.`,
-                {
-                    reply_markup: Markup.inlineKeyboard([
-                        Markup.button.callback('Перейти к заявке', `?detailedApp_${application._id}`)
-                    ]).resize().reply_markup
-                }
-            );
+            await bot.telegram.sendMessage(id, `Заявка №${application.normalId} будет рассмотрена до ${formattedDate}.`, {
+                reply_markup: Markup.inlineKeyboard([
+                    Markup.button.callback('Перейти к заявке', `?detailedApp_${application._id}`)
+                ]).resize().reply_markup
+            });
 
             res.status(200).send('Message sent successfully');
         } catch (error) {
