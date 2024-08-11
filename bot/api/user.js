@@ -68,7 +68,7 @@ export const deleteApplication = (app, bot) => {
 };
 
 export const setDateToAnswer = (app, bot) => {
-    app.post("/api/application/set-date/:id", async (req, res) => {
+    app.post("/api/application/set-date/:id"), async (req, res) => {
         const { id } = req.params;
         const { _id, date } = req.body;
 
