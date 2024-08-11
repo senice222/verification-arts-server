@@ -11,7 +11,7 @@ import { sendMail } from "../../utils/sendMail.js"
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
-const filePath = path.join(__dirname, '../../utils/ПАМЯТКА.docx');
+const filePath = path.join(__dirname, '../../utils/Предоставление_информации_по_акту.docx');
 
 const baseDirectory = join(__dirname, '..', '..', 'api', 'uploads');
 
@@ -25,9 +25,12 @@ const ApplyApplication = new Scenes.WizardScene(
 	async ctx => {
 		ctx.wizard.state.deleteMessages = [];
 		ctx.wizard.state.data = {};
+		ctx.wizard.state.data.fileAct = [];
+		ctx.wizard.state.data.fileExplain = [];
+		ctx.wizard.state.data.additionalInformation = []
 
 		const msg = await ctx.reply(
-			`<b>⚙️ Введите название компании, от которой отправляется акт</b>`,
+			`<b>⚙️ Введите полное название компании, от которой отправляется акт:</b> \n\n<i>Пример: ООО "Компания"</i>`,
 			{
 				reply_markup: cancelKeyboard.reply_markup,
 				parse_mode: 'HTML',
@@ -41,7 +44,7 @@ const ApplyApplication = new Scenes.WizardScene(
 			ctx.wizard.state.data['name'] = ctx.message.text;
 			ctx.wizard.state.data['id'] = ctx.from.id
 			const msg = await ctx.reply(
-				`<b>⚙️ Введите ИНН компании, от которой отправляется акт</b>`,
+				`<b>⚙️ Введите ИНН компании, от которой отправляется акт:</b> \n\n<i>Пример: 7877675123</i>`,
 				{
 					reply_markup: cancelKeyboard.reply_markup,
 					parse_mode: 'HTML',
@@ -55,165 +58,146 @@ const ApplyApplication = new Scenes.WizardScene(
 
 	},
 	async ctx => {
-		try {
-			if (ctx.updateType === 'message') {
-				ctx.wizard.state.data['inn'] = ctx.message.text;
-				const fileMsg = await ctx.replyWithDocument({ source: filePath }, {
-					caption: 'Памятка',
+		if (ctx.updateType === 'message') {
+			ctx.wizard.state.data.accepted = true;
+			ctx.wizard.state.data['inn'] = ctx.message.text;
+			const msg = await ctx.reply(`<b>⚙️ Отправьте файл акта и ответ на него, если он есть.</b>\n\n<i>Пожалуйста, отправляйте по одному файлу за раз. Вы можете отправить несколько файлов.</i>`, {
+				reply_markup: cancelKeyboard.reply_markup,
+				parse_mode: "HTML"
+			});
+
+			ctx.wizard.state.deleteMessages.push(msg.message_id);
+			ctx.wizard.next();
+		}
+	},
+	async ctx => {
+		if (ctx.updateType === 'callback_query') {
+			if (ctx.update.callback_query.data === '?done_act') {
+				const msg = await ctx.replyWithDocument({ source: filePath }, {
+					caption: '<b>❗ Скачайте и заполните приложенный выше опросный лист.\n\n⚙️ Отправьте заполненный опросный лист, а также дополнительные документы, если они есть. Список дополнительных документов указан в конце документа.</b>\n\n<i>Пожалуйста, отправляйте по одному файлу за раз. Вы можете отправить несколько файлов.</i>',
 					reply_markup: Markup.inlineKeyboard([
-						Markup.button.callback('Ознакомлен', '?acknowledge')
-					]).resize().reply_markup
+						Markup.button.callback('❌ Отменить', '?cancelScene')
+					]).resize().reply_markup,
+					parse_mode: 'HTML',
 				});
 
-				ctx.wizard.state.deleteMessages.push(fileMsg.message_id);
-				ctx.wizard.next();
-			} else {
-				await ctx.reply('Пожалуйста, введите ИНН компании.');
-			}
-		} catch (error) {
-			console.error('Error in step 3:', error);
-		}
-	},
-	async ctx => {
-		if (ctx.updateType === 'callback_query') {
-			if (ctx.update.callback_query.data === '?acknowledge') {
-				ctx.wizard.state.data.accepted = true;
-				ctx.wizard.state.data.fileAct = [];
-				const msg = await ctx.reply(
-					`<b>⚙️ Отправьте файл акта (можете отправить несколько файлов или нажмите "Готово" для завершения):</b>`,
-					{
-						reply_markup: {
-							inline_keyboard: [
-								[{ text: 'Готово', callback_data: '?uploaded' }]
-							],
-						},
-						parse_mode: 'HTML',
-					}
-				);
 				ctx.wizard.state.deleteMessages.push(msg.message_id);
 				ctx.wizard.next();
 			}
-		} else if (ctx.message && ctx.message.text) {
-			await ctx.reply('Пожалуйста, отправьте файл.');
-		}
-	},
-	async ctx => {
-		if (ctx.updateType === 'callback_query') {
-			if (ctx.update.callback_query.data === '?uploaded') {
-				const msg = await ctx.reply(
-					'<b>⚙️ Отправьте файл с пояснениями:</b>',
-					{
-						reply_markup: Markup.inlineKeyboard([
-							[
-								Markup.button.callback("У меня нет пояснений", "?noExplanation")
-							],
-							[
-								Markup.button.callback("❌ Отменить", "?cancelScene")
-							]
-						]).resize().reply_markup,
-						parse_mode: 'HTML',
-					}
-				);
-				ctx.wizard.state.deleteMessages.push(msg.message_id);
-				ctx.wizard.next();
-			} else if (ctx.message.document) {
-				const file = ctx.message.document;
-				try {
-					const fileUrl = await ctx.telegram.getFileLink(file.file_id);
-					ctx.wizard.state.data.fileAct.push(fileUrl);
+		} else if (ctx.message.document || ctx.message.photo) {
+			console.log('acts')
+			try {
+				let fileUrl;
 
+				if (ctx.message.document) {
+					const file = ctx.message.document;
+					fileUrl = await ctx.telegram.getFileLink(file.file_id);
+				} else if (ctx.message.photo) {
+					const file = ctx.message.photo[ctx.message.photo.length - 1];
+					fileUrl = await ctx.telegram.getFileLink(file.file_id);
+				}
+
+				ctx.wizard.state.data.fileAct.push(fileUrl.href);
+
+				if (ctx.wizard.state.data.fileAct.length === 1) {
 					const msg = await ctx.reply(
-						`Файл успешно добавлен.`,
+						`Продолжайте отправлять файлы, если это необходимо. Как закончите, нажмите на кнопку “Готово” ниже.`,
 						{
 							reply_markup: {
 								inline_keyboard: [
-									[{ text: 'Готово', callback_data: '?uploaded' }]
+									[{ text: 'Готово', callback_data: '?done_act' }]
 								],
 							},
+							parse_mode: 'HTML',
 						}
 					);
 					ctx.wizard.state.deleteMessages.push(msg.message_id);
-				} catch (err) {
-					console.error('Error during file download:', err);
-					await ctx.reply('Произошла ошибка при сохранении файла. Попробуйте снова.');
 				}
-			} else if (ctx.message.text) {
-				const msg = await ctx.reply('Пожалуйста, отправьте файл.');
-				ctx.wizard.state.deleteMessages.push(msg.message_id);
-			} else if (ctx.message.photo) {
-				await ctx.reply('Вы отправили изображение. Пожалуйста, отправьте файл.');
-			} else {
-				await ctx.reply('Пожалуйста, отправьте файл.');
+			} catch (err) {
+				console.error('Error during file download:', err);
+				await ctx.reply('Произошла ошибка при сохранении файла. Попробуйте снова.');
 			}
+		} else if (ctx.message.text) {
+			const msg = await ctx.reply('На этом этапе нельзя отправить текст. Пожалуйста, отправьте файл.');
+			ctx.wizard.state.deleteMessages.push(msg.message_id);
+		} else {
+			await ctx.reply('Пожалуйста, отправьте файл.');
 		}
 	},
-	async ctx => {
+	async function (ctx) {
 		if (ctx.updateType === 'callback_query') {
 			if (ctx.update.callback_query.data === '?noExplanation') {
-try {
-				ctx.wizard.state.data.owner = ctx.from.id
-				const user = await UserModel.findOne({ id: ctx.from.id })
+				try {
+					ctx.wizard.state.data.owner = ctx.from.id;
+					const user = await UserModel.findOne({ id: ctx.from.id });
+					const { name, inn, fileAct, fileExplain, additionalInformation } = ctx.wizard.state.data;
 
-				// Создание новой заявки с добавленными файлами акта и пояснений
-				const application = new ApplicationModel({
-					...ctx.wizard.state.data,
-					fileExplanation: ctx.wizard.state.data.fileExplanation || [] // Используем массив пояснений, если он есть
-				})
+					const application = new ApplicationModel({
+						owner: ctx.from.id,
+						name,
+						inn,
+						fileAct,
+						fileExplain,
+						additionalInformation
+					});
 
-				await application.save()
-				user.applications.push(application._id)
-				await user.save()
+					await application.save();
+					user.applications.push(application._id);
+					await user.save();
 
-				// Отправка письма
-				sendMail(application, `https://kvik.cc/application/${application._id}`, 'new')
+					// Отправка письма
+					sendMail(application, `https://kvik.cc/application/${application._id}`, 'new');
 
-				await ctx.reply(
-					`<b>Заявка №${application.normalId} создана!</b>\nВ ближайшее время мы сообщим\nВам время рассмотрения заявки`,
-					{
-						reply_markup: Markup.inlineKeyboard([
-							Markup.button.callback('Перейти к заявке', `?detailedApp_${application._id}`)
-						]).resize().reply_markup,
-						parse_mode: 'HTML',
-					}
-				)
+					await ctx.reply(
+						`<b>✅ Заявка №${application.normalId} создана и отправлена на рассмотрение!</b>\n<i>В ближайшее время мы сообщим\nВам время рассмотрения заявки</i>`,
+						{
+							reply_markup: Markup.inlineKeyboard([
+								Markup.button.callback('Перейти к заявке', `?detailedApp_${application._id}`)
+							]).resize().reply_markup,
+							parse_mode: 'HTML',
+						}
+					);
 
-				// Удаление сообщений, которые были использованы в процессе создания заявки
-				ctx.wizard.state.deleteMessages.forEach(item => ctx.deleteMessage(item))
-				ctx.scene.leave()
-			} catch (err) {
-				console.error('Error during application creation:', err)
-				const msg = await ctx.reply('<b>Произошла ошибка при создании заявки. Попробуйте снова.</b>', { parse_mode: 'HTML' });
-				ctx.wizard.state.deleteMessages.push(msg.message_id);
-			}
-			}
-		} else if (ctx.message.document) {
-			const file = ctx.message.document
-			try {
-				const fileUrl = await ctx.telegram.getFileLink(file.file_id)
-				if (!ctx.wizard.state.data.fileExplanation) {
-					ctx.wizard.state.data.fileExplanation = [] // Инициализация массива пояснений, если его еще нет
+					ctx.wizard.state.deleteMessages.forEach(item => ctx.deleteMessage(item));
+					ctx.scene.leave();
+				} catch (err) {
+					console.error('Error during application creation:', err);
+					const msg = await ctx.reply('<b>Произошла ошибка при создании заявки. Попробуйте снова.</b>', { parse_mode: 'HTML' });
+					ctx.wizard.state.deleteMessages.push(msg.message_id);
 				}
-				ctx.wizard.state.data.fileExplanation.push(fileUrl) // Добавление файла в массив пояснений
+			}
 
-				const msg = await ctx.reply(
-					`Файл успешно добавлен. Вы можете отправить еще один файл или нажмите "Готово".`,
-					{
-						reply_markup: {
-							inline_keyboard: [
-								[{ text: 'Готово', callback_data: '?done' }]
-							],
-						},
-						parse_mode: 'HTML',
-					}
-				);
-				ctx.wizard.state.deleteMessages.push(msg.message_id);
+		} else if (ctx.message.document || ctx.message.text) {
+			try {
+				console.log('explain')
+				let data;
+				if (ctx.message.document) {
+					const file = ctx.message.document;
+					const link = await ctx.telegram.getFileLink(file.file_id);
+					data = link.href
+				} else {
+					data = ctx.message.text
+				}
+				console.log(data)
+				ctx.wizard.state.data.fileExplain.push(data);
+
+				if (ctx.wizard.state.data.fileExplain.length === 1) {
+					const msg = await ctx.reply(
+						`Продолжайте отправлять сообщения, если это необходимо.\nКак закончите, нажмите на кнопку “Готово” ниже.`,
+						{
+							reply_markup: Markup.inlineKeyboard([
+								[Markup.button.callback("Готово", "?noExplanation")]
+							]).resize().reply_markup
+						}
+					);
+					ctx.wizard.state.deleteMessages.push(msg.message_id);
+				}
 			} catch (err) {
-				console.error('Error during file processing:', err)
-				const msg = await ctx.reply('<b>Произошла ошибка при сохранении файла. Попробуйте снова.</b>', { parse_mode: 'HTML' })
-				ctx.wizard.state.deleteMessages.push(msg.message_id)
+				console.error('Error during file download:', err);
+				await ctx.reply('Произошла ошибка при сохранении файла. Попробуйте снова.');
 			}
 		} else if (ctx.message.photo) {
-			await ctx.reply('Пожалуйста, отправьте файл, а не картинку.');
+			await ctx.reply('Вы отправили изображение. Пожалуйста, отправьте файл.');
 		} else {
 			await ctx.reply('Пожалуйста, отправьте файл.');
 		}

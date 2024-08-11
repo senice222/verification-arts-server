@@ -1,6 +1,5 @@
 import { Markup } from 'telegraf'
 import ApplicationModel from '../../../models/Application.model.js'
-import iconv from 'iconv-lite'
 
 const detailedApplication = (bot) => {
     bot.action([/\?detailedApp_(.+)/], async (ctx) => {
@@ -11,42 +10,37 @@ const detailedApplication = (bot) => {
                 await ctx.reply('Заявка не найдена.');
                 return;
             }
-
-            let messageText = `<b>Заявка №${application.normalId}</b>\nСтатус: ${application.status}\n-\n<b>Приложенные файлы:</b>`;
+            const subject = encodeURIComponent(`Вопрос по заявке №${application.normalId}`);
+            
+            let messageText = `<b>Заявка №${application.normalId}</b>\n<b>Статус: </b>${application.status}`;
             if (application.dateAnswer) {
-                messageText += `\nДата ответа: ${application.dateAnswer}`;
-            }
-            if (application.fileAct) {
-                messageText += `\nАкт: <a href="${application.fileAct}">скачать</a>`;
-            }
-            if (application.fileExplain) {
-                messageText += `\nПояснения: <a href="${application.fileExplain}">скачать</a>`;
+                messageText += `\nБудет рассмотрена до: ${application.dateAnswer}`;
             }
 
             const validFiles = application.fileAnswer.filter(file => file.trim() !== '');
             if (application.comments) (
-                messageText += `\n---\n<b>Ответ по заявке:</b>\nКомментарии: ${application.comments || 'Нет комментариев'}`
+                messageText += `\n---\n<b>Ответ по заявке:</b>\n<b>Комментарии:</b> ${application.comments || 'Нет комментариев'}`
             )
             if (validFiles.length > 0) {
-                messageText += `\nФайлы:`;
-                validFiles.forEach(file => {
-                    messageText += `\n<a href="https://kvik.cc/api/uploads/${file}">Скачать ${file}</a>`;
+                validFiles.forEach((file, index) => {
+                    messageText += `\nФайл ${index + 1}: <a href="https://kvik.cc/api/uploads/${file}">Скачать</a>\n`;
                 });
-
+                messageText += `----\nПри возникновении вопросов по заявке обращайтесь на почту adm01@uk-fp.ru. В теме письма укажите “Вопрос по заявке №${application.normalId}”.`
                 await ctx.editMessageText(
                     messageText,
                     {
                         reply_markup: Markup.inlineKeyboard([
-                            [Markup.button.callback('В меню заявок', `?myApplications`)]
+                            [Markup.button.callback('Вернуться назад', `?myApplications`)]
                         ]).resize().reply_markup,
                         parse_mode: 'HTML'
                     }
                 );
             } else {
+                messageText += `----\nПри возникновении вопросов по заявке обращайтесь на почту adm01@uk-fp.ru. В теме письма укажите “Вопрос по заявке №${application.normalId}”.`
                 await ctx.editMessageText(messageText,
                     {
                         reply_markup: Markup.inlineKeyboard([
-                            Markup.button.callback('Вернуться назад', `?myApplications`)
+                            [Markup.button.callback('Вернуться назад', `?myApplications`)]
                         ]).resize().reply_markup,
                         parse_mode: 'HTML'
                     }

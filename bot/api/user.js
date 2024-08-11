@@ -88,7 +88,7 @@ export const setDateToAnswer = (app, bot) => {
             application.history.push({ label: `Установлен срок ответа: до ${formattedDate}` });
             await application.save();
 
-            await bot.telegram.sendMessage(id, `Заявка №${application.normalId} будет рассмотрена до ${formattedDate}.`, {
+            await bot.telegram.sendMessage(id, `<b>🕓 Заявка №${application.normalId}</b> будет рассмотрена до ${formattedDate}.`, {
                 reply_markup: Markup.inlineKeyboard([
                     Markup.button.callback('Перейти к заявке', `?detailedApp_${application._id}`)
                 ]).resize().reply_markup
@@ -173,7 +173,6 @@ export const reviewedApplication = (app, bot) => {
             if (comments) {
                 updateData.comments = comments;
             }
-            console.log(files)
             const application = await ApplicationModel.findByIdAndUpdate(
                 _id,
                 { $set: updateData },
@@ -184,7 +183,7 @@ export const reviewedApplication = (app, bot) => {
             }
             application.status = "Рассмотрена"
             await application.save();
-            const messageText = `Заявка №${application.normalId} ${status}!${status === 'Рассмотрена' ? '\nПерейдите на страницу заявки,\nчтобы увидеть ответ.' : ''}`;
+            const messageText = `✅Заявка №${application.normalId} ${status}!${status === 'Рассмотрена' ? '\nНажмите на кнопку ниже, чтобы увидеть ответ' : ''}`;
 
             await bot.telegram.sendMessage(id, messageText,
                 {

@@ -64,6 +64,10 @@ const ApplicationSchema = new mongoose.Schema(
             type: String,
             default: ""
         },
+        additionalInformation: {
+            type: [],
+            default: []
+        },
         owner: {
             type: Number,
             required: true

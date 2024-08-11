@@ -20,7 +20,7 @@ const listApplicationsAction = (bot) => {
         try {
             const user = await UserModel.findOne({ id: ctx.from.id }).populate('applications')
             if (!user || !user.applications.length) {
-                await ctx.reply('У вас нет сохраненных заявок.')
+                await ctx.reply('У Вас нет заявок.')
                 return
             }
     

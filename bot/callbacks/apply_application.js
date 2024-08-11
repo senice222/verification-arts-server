@@ -11,7 +11,7 @@ const applyCallback = (bot) => {
         } else {
             const inlineKeyboard = user.applications.map(application => [
                 {
-                    text: `ООО "${application.name}" – ИНН ${application.inn}`,
+                    text: `${application.name} – ИНН ${application.inn}`,
                     callback_data: `select_application_${application._id}` 
                 }
             ])
