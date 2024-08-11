@@ -71,13 +71,14 @@ export const setDateToAnswer = (app, bot) => {
     app.post("/api/application/set-date/:id", async (req, res) => {
         const { id } = req.params;
         const { _id, date } = req.body;
+
         try {
             const application = await ApplicationModel.findById(_id);
             if (!application) {
                 return res.status(404).json("Application not found");
             }
 
-            const normalizedDate = normalizeDate(date);
+            const normalizedDate = parseISO(date);
             if (!normalizedDate) {
                 return res.status(400).json("Invalid date format");
             }
@@ -91,7 +92,8 @@ export const setDateToAnswer = (app, bot) => {
             await bot.telegram.sendMessage(id, `<b>🕓 Заявка №${application.normalId}</b> будет рассмотрена до ${formattedDate}.`, {
                 reply_markup: Markup.inlineKeyboard([
                     Markup.button.callback('Перейти к заявке', `?detailedApp_${application._id}`)
-                ]).resize().reply_markup
+                ]).resize().reply_markup,
+                parse_mode: "HTML"
             });
 
             res.status(200).send('Message sent successfully');
