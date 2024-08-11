@@ -78,8 +78,11 @@ export const setDateToAnswer = (app, bot) => {
                 return res.status(404).json("Application not found");
             }
 
-            const normalizedDate = parseISO(date);
-            if (!normalizedDate) {
+            let normalizedDate = parseISO(date);
+
+            if (!isNaN(normalizedDate)) {
+                normalizedDate = startOfDay(addHours(normalizedDate, 3));
+            } else {
                 return res.status(400).json("Invalid date format");
             }
 
@@ -101,8 +104,8 @@ export const setDateToAnswer = (app, bot) => {
             console.error('Error sending message:', error);
             res.status(500).send('Failed to send message');
         }
-    });
-};
+    }
+}
 
 export const changeStatus = (app, bot) => {
     app.put("/api/application/change-status/:id", async (req, res) => {
