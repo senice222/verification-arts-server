@@ -10,9 +10,8 @@ const detailedApplication = (bot) => {
                 await ctx.reply('Заявка не найдена.');
                 return;
             }
-            const subject = encodeURIComponent(`Вопрос по заявке №${application.normalId}`);
             
-            let messageText = `<b>Заявка №${application.normalId}</b>\n<b>Статус: </b>${application.status}`;
+            let messageText = `<b>Заявка №${application.normalId}</b>\n<b>Статус: </b>${application.status}\n`;
             if (application.dateAnswer) {
                 messageText += `\nБудет рассмотрена до: ${application.dateAnswer}`;
             }
