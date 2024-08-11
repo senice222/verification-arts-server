@@ -12,11 +12,7 @@ const upload = multer({ dest: uploadPath })
 const sendClarifications = (bot) => {
     bot.action([/clarify_(.+)_(.+)/], async (ctx) => {
         const applicationId = ctx.match[1]
-        await ctx.reply(`Отправьте уточнения в этот чат. Можно отправить как текст, так и файлы. Как закончите отправлять, нажмите "Готово".`, {
-            reply_markup: Markup.inlineKeyboard([
-                Markup.button.callback('Готово', `done_${applicationId}`)
-            ]).resize().reply_markup
-        })
+        await ctx.reply(`Отправьте уточнения в этот чат. Можно отправить как текст, так и файлы. Как закончите отправлять, нажмите "Готово".`)
         
         ctx.session.applicationId = applicationId
         ctx.session.clarifications = []
@@ -32,7 +28,11 @@ const sendClarifications = (bot) => {
             })
             if (ctx.session.clarifications.length === 1) {
                 try {
-                    await ctx.reply(`Продолжайте отправлять сообщения. Как закончите отправлять, нажмите “Готово”.`)
+                    await ctx.reply(`Продолжайте отправлять сообщения. Как закончите отправлять, нажмите “Готово”.`, {
+                        reply_markup: Markup.inlineKeyboard([
+                            Markup.button.callback('Готово', `done_${ctx.session.applicationId}`)
+                        ]).resize().reply_markup
+                    })
                 } catch (error) {
                     console.error('Error editing message:', error)
                 }
@@ -55,7 +55,11 @@ const sendClarifications = (bot) => {
 
             if (ctx.session.clarifications.length === 1) {
                 try {
-                    await ctx.reply(`Продолжайте отправлять сообщения. Как закончите отправлять, нажмите “Готово”.`)
+                    await ctx.reply(`Продолжайте отправлять сообщения. Как закончите отправлять, нажмите “Готово”.`, {
+                        reply_markup: Markup.inlineKeyboard([
+                            Markup.button.callback('Готово', `done_${ctx.session.applicationId}`)
+                        ]).resize().reply_markup
+                    })
                 } catch (error) {
                     console.error('Error editing message:', error)
                 }
@@ -77,7 +81,11 @@ const sendClarifications = (bot) => {
 
             if (ctx.session.clarifications.length === 1) {
                 try {
-                    await ctx.reply(`Продолжайте отправлять сообщения. Как закончите отправлять, нажмите “Готово”.`)
+                    await ctx.reply(`Продолжайте отправлять сообщения. Как закончите отправлять, нажмите “Готово”.`, {
+                        reply_markup: Markup.inlineKeyboard([
+                            Markup.button.callback('Готово', `done_${ctx.session.applicationId}`)
+                        ]).resize().reply_markup
+                    })
                 } catch (error) {
                     console.error('Error editing message:', error)
                 }

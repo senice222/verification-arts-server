@@ -167,18 +167,22 @@ const ApplyApplication = new Scenes.WizardScene(
 				}
 			}
 
-		} else if (ctx.message.document || ctx.message.text) {
+		} else if (ctx.message.document || ctx.message.text || ctx.message.photo) {
 			try {
-				console.log('explain')
 				let data;
 				if (ctx.message.document) {
 					const file = ctx.message.document;
 					const link = await ctx.telegram.getFileLink(file.file_id);
 					data = link.href
+				} else if (ctx.message.photo) {
+					const photos = ctx.message.photo;
+					const highestResolutionPhoto = photos[photos.length - 1];
+					const link = await ctx.telegram.getFileLink(highestResolutionPhoto.file_id);
+					data = link.href;
+
 				} else {
 					data = ctx.message.text
 				}
-				console.log(data)
 				ctx.wizard.state.data.fileExplain.push(data);
 
 				if (ctx.wizard.state.data.fileExplain.length === 1) {
@@ -196,8 +200,6 @@ const ApplyApplication = new Scenes.WizardScene(
 				console.error('Error during file download:', err);
 				await ctx.reply('Произошла ошибка при сохранении файла. Попробуйте снова.');
 			}
-		} else if (ctx.message.photo) {
-			await ctx.reply('Вы отправили изображение. Пожалуйста, отправьте файл.');
 		} else {
 			await ctx.reply('Пожалуйста, отправьте файл.');
 		}
