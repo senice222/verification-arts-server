@@ -170,7 +170,7 @@ export const closeApplication = (app, bot) => {
 export const reviewedApplication = (app, bot) => {
     app.put("/api/application/reviewed/:id", upload.array('files'), async (req, res) => {
         const { id } = req.params
-        const { _id, status, comments } = req.body;
+        const { _id, status, comments, admin } = req.body;
         const files = req.files.map(file => file.filename);
 
         try {
@@ -185,6 +185,13 @@ export const reviewedApplication = (app, bot) => {
             );
             if (!application) {
                 return res.status(404).json({ message: 'Application not found' });
+            }
+            if (comments) {
+                const historyEntry = { label: comments, admin, type: "comment" };
+                if (files.length > 0) {
+                    historyEntry.fileUrls = files;
+                }
+                application.history.push(historyEntry);
             }
             application.status = "Рассмотрена"
             await application.save();
