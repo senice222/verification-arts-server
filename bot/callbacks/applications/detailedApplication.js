@@ -10,12 +10,14 @@ const detailedApplication = (bot) => {
                 await ctx.reply('Заявка не найдена.');
                 return;
             }
-            
-            let messageText = `<b>Заявка №${application.normalId}</b>\n<b>Статус: </b>${application.status}\n`;
+
+            let messageText = `<b>Заявка №${application.normalId}</b>\n<b>Статус: </b>${application.status}`;
             if (application.dateAnswer) {
                 messageText += `\nБудет рассмотрена до: ${application.dateAnswer}`;
             }
-
+            if (application.status === "На уточнении") {
+                messageText += "\n–––––\n<i>Проверьте сообщение об уточнениях в этом чате выше и отправьте их.</i>\n–––––"
+            }
             const validFiles = application.fileAnswer.filter(file => file.trim() !== '');
             if (application.comments) (
                 messageText += `\n---\n<b>Ответ по заявке:</b>\n<b>Комментарии:</b> ${application.comments || 'Нет комментариев'}\n`
