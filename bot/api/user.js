@@ -245,7 +245,7 @@ export const getClarifications = (app, bot) => {
             await bot.telegram.sendMessage(id, messageText, {
                 parse_mode: 'HTML',
                 reply_markup: Markup.inlineKeyboard([
-                    Markup.button.callback('Отправить уточнение', `clarify_${application._id}_${text}`)
+                    Markup.button.callback('Отправить уточнение', `clarify_${application._id}`)
                 ]).resize().reply_markup
             });
 
