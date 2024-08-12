@@ -26,7 +26,7 @@ const detailedApplication = (bot) => {
                 validFiles.forEach((file, index) => {
                     messageText += `\nФайл ${index + 1}: <a href="https://kvik.cc/api/uploads/${file}">Скачать</a>\n`;
                 });
-                messageText += `----\nПри возникновении вопросов по заявке обращайтесь на почту adm01@uk-fp.ru. В теме письма укажите “Вопрос по заявке №${application.normalId}”.`
+                messageText += `\n----\nПри возникновении вопросов по заявке обращайтесь на почту adm01@uk-fp.ru. В теме письма укажите “Вопрос по заявке №${application.normalId}”.`
                 await ctx.editMessageText(
                     messageText,
                     {
