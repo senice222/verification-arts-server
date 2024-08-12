@@ -37,7 +37,7 @@ const detailedApplication = (bot) => {
                     }
                 );
             } else {
-                messageText += `----\nПри возникновении вопросов по заявке обращайтесь на почту adm01@uk-fp.ru. В теме письма укажите “Вопрос по заявке №${application.normalId}”.`
+                messageText += `\n----\nПри возникновении вопросов по заявке обращайтесь на почту adm01@uk-fp.ru. В теме письма укажите “Вопрос по заявке №${application.normalId}”.`
                 await ctx.editMessageText(messageText,
                     {
                         reply_markup: Markup.inlineKeyboard([
