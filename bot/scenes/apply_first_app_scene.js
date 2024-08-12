@@ -158,7 +158,6 @@ const ApplyApplication = new Scenes.WizardScene(
 						}
 					);
 
-					ctx.wizard.state.deleteMessages.forEach(item => ctx.deleteMessage(item));
 					ctx.scene.leave();
 				} catch (err) {
 					console.error('Error during application creation:', err);
