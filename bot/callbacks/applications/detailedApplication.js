@@ -20,7 +20,7 @@ const detailedApplication = (bot) => {
             }
             const validFiles = application.fileAnswer.filter(file => file.trim() !== '');
             if (application.comments) (
-                messageText += `\n---\n<b>Ответ по заявке:</b>\n<b>Комментарии:</b> ${application.comments || 'Нет комментариев'}\n`
+                messageText += `\n---\n<b>Ответ по заявке:</b>\n<b>Комментарии:</b> ${application.comments || 'Нет комментариев'}`
             )
             if (validFiles.length > 0) {
                 validFiles.forEach((file, index) => {
