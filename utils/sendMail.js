@@ -17,12 +17,7 @@ export const sendMail = (application, link, type) => {
         ? `Поступили уточнения по заявке №${application.normalId}`
         : `Поступила новая заявка №${application.normalId}`
 
-    const bodyText = type === 'clarification'
-        ? `Поступили уточнения по заявке №${application.normalId}:`
-        : `Поступила новая заявка №${application.normalId}:`
-
     const styledEmailContent = `
-    <p><strong>${bodyText}</strong></p>
     <p>Компания: ${application.name}</p>
     <p>ИНН: ${application.inn}</p>
     <p>Для просмотра ${type === 'clarification' ? 'уточнений и ответа' : 'заявки и ответа'} на заявку перейдите в админ панель: <a href="${link}">ОТКРЫТЬ</a></p>
