@@ -4,21 +4,36 @@ import fs from 'fs'
 import path from 'path'
 import axios from 'axios'
 import { dirname, join } from 'path';
+import { v4 as uuidv4 } from 'uuid'; 
 import { fileURLToPath } from 'url';
 import UserModel from "../../models/User.model.js"
 import ApplicationModel from "../../models/Application.model.js"
 import { sendMail } from "../../utils/sendMail.js"
+import dotenv from 'dotenv'
+import multer from 'multer';
+dotenv.config();
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
-const filePath = path.join(__dirname, '../../utils/Предоставление_информации_по_акту.docx');
 
-const baseDirectory = join(__dirname, '..', '..', 'api', 'uploads');
+const uploadDirectory = path.join(__dirname, '../../api/uploads');
 
-
-if (!fs.existsSync(baseDirectory)) {
-	fs.mkdirSync(baseDirectory, { recursive: true });
+if (!fs.existsSync(uploadDirectory)) {
+	fs.mkdirSync(uploadDirectory, { recursive: true });
 }
+const fileInfoPath = path.join(__dirname, '../../utils/Предоставление_информации_по_акту.docx');
+
+const storage = multer.diskStorage({
+	destination: function (req, file, cb) {
+		cb(null, uploadDirectory);
+	},
+	filename: function (req, file, cb) {
+		const uniqueSuffix = uuidv4();
+		const fileName = `${path.parse(file.originalname).name}_${uniqueSuffix}${path.extname(file.originalname)}`;
+		cb(null, fileName);
+	}
+});
+const upload = multer({ storage: storage });
 
 const ApplyApplication = new Scenes.WizardScene(
 	'apply_first_application',
@@ -73,7 +88,7 @@ const ApplyApplication = new Scenes.WizardScene(
 	async ctx => {
 		if (ctx.updateType === 'callback_query') {
 			if (ctx.update.callback_query.data === '?done_act') {
-				const msg = await ctx.replyWithDocument({ source: filePath }, {
+				const msg = await ctx.replyWithDocument({ source: fileInfoPath }, {
 					caption: '<b>❗ Скачайте и заполните приложенный выше опросный лист.\n\n⚙️ Отправьте заполненный опросный лист, а также дополнительные документы, если они есть. Список дополнительных документов указан в конце документа.</b>\n\n<i>Пожалуйста, отправляйте по одному файлу за раз. Вы можете отправить несколько файлов.</i>',
 					reply_markup: Markup.inlineKeyboard([
 						Markup.button.callback('❌ Отменить', '?cancelScene')
@@ -85,19 +100,28 @@ const ApplyApplication = new Scenes.WizardScene(
 				ctx.wizard.next();
 			}
 		} else if (ctx.message.document || ctx.message.photo) {
-			console.log('acts')
 			try {
-				let fileUrl;
+				const file = ctx.message.document || ctx.message.photo[ctx.message.photo.length - 1];
+				const fileId = file.file_id;
+				const fileInfo = await ctx.telegram.getFile(fileId);
+				const filePath = fileInfo.file_path;
+				
+				const uniqueSuffix = uuidv4();
+				const fileName = `${uniqueSuffix}@${path.basename(filePath)}`;
+				const localFilePath = path.join(uploadDirectory, fileName);
+				const fileStream = fs.createWriteStream(localFilePath);
+				const fileUrl = `https://api.telegram.org/file/bot${process.env.TOKEN}/${filePath}`;
 
-				if (ctx.message.document) {
-					const file = ctx.message.document;
-					fileUrl = await ctx.telegram.getFileLink(file.file_id);
-				} else if (ctx.message.photo) {
-					const file = ctx.message.photo[ctx.message.photo.length - 1];
-					fileUrl = await ctx.telegram.getFileLink(file.file_id);
-				}
+				const downloadStream = await axios({
+					url: fileUrl,
+					method: 'GET',
+					responseType: 'stream'
+				});
 
-				ctx.wizard.state.data.fileAct.push(fileUrl.href);
+				downloadStream.data.pipe(fileStream);
+
+				const publicFileUrl = `https://consultantnlgpanel.ru/api/uploads/${fileName}`;
+				ctx.wizard.state.data.fileAct.push(publicFileUrl);
 
 				if (ctx.wizard.state.data.fileAct.length === 1) {
 					const msg = await ctx.reply(
@@ -146,7 +170,7 @@ const ApplyApplication = new Scenes.WizardScene(
 					await user.save();
 
 					// Отправка письма
-					sendMail(application, `https://kvik.cc/application/${application._id}`, 'new');
+					sendMail(application, `https://consultantnlgpanel.ru/application/${application._id}`, 'new');
 
 					await ctx.reply(
 						`<b>✅ Заявка №${application.normalId} создана и отправлена на рассмотрение!</b>\n<i>В ближайшее время мы сообщим\nВам время рассмотрения заявки</i>`,
@@ -166,42 +190,68 @@ const ApplyApplication = new Scenes.WizardScene(
 				}
 			}
 
-		} else if (ctx.message.document || ctx.message.text || ctx.message.photo) {
-			try {
-				let data;
-				if (ctx.message.document) {
-					const file = ctx.message.document;
-					const link = await ctx.telegram.getFileLink(file.file_id);
-					data = link.href
-				} else if (ctx.message.photo) {
-					const photos = ctx.message.photo;
-					const highestResolutionPhoto = photos[photos.length - 1];
-					const link = await ctx.telegram.getFileLink(highestResolutionPhoto.file_id);
-					data = link.href;
+		} else if (ctx.message.document || ctx.message.text) {
+            try {
+                let data;
+                if (ctx.message.document) {
+                    const file = ctx.message.document;
+                    const fileInfo = await ctx.telegram.getFile(file.file_id);
+                    const filePath = fileInfo.file_path;
+                    const uniqueSuffix = uuidv4();
+                    const fileName = `${uniqueSuffix}@${path.basename(filePath)}`;
+                    const localFilePath = path.join(uploadDirectory, fileName);
+                    const fileStream = fs.createWriteStream(localFilePath);
+                    const downloadStream = await axios({
+                        url: `https://api.telegram.org/file/bot${process.env.TOKEN}/${fileInfo.file_path}`,
+                        method: 'GET',
+                        responseType: 'stream'
+                    });
 
-				} else {
-					data = ctx.message.text
-				}
-				ctx.wizard.state.data.fileExplain.push(data);
+                    downloadStream.data.pipe(fileStream);
+                    const publicFileUrl = `https://consultantnlgpanel.ru/api/uploads/${fileName}`;
+                    data = publicFileUrl;
+                } else if (ctx.message.photo) {
+                    const photos = ctx.message.photo;
+                    const highestResolutionPhoto = photos[photos.length - 1];
+                    const fileInfo = await ctx.telegram.getFile(highestResolutionPhoto.file_id);
+                    const uniqueSuffix = uuidv4();
+                    const filePath = fileInfo.file_path;
+                    const fileName = `${uniqueSuffix}@${path.basename(filePath)}`;
+                    const localFilePath = path.join(uploadDirectory, fileName);
+                    const fileStream = fs.createWriteStream(localFilePath);
+                    const downloadStream = await axios({
+                        url: `https://api.telegram.org/file/bot${process.env.TOKEN}/${fileInfo.file_path}`,
+                        method: 'GET',
+                        responseType: 'stream'
+                    });
 
-				if (ctx.wizard.state.data.fileExplain.length === 1) {
-					const msg = await ctx.reply(
-						`Продолжайте отправлять сообщения, если это необходимо.\nКак закончите, нажмите на кнопку “Готово” ниже.`,
-						{
-							reply_markup: Markup.inlineKeyboard([
-								[Markup.button.callback("Готово", "?noExplanation")]
-							]).resize().reply_markup
-						}
-					);
-					ctx.wizard.state.deleteMessages.push(msg.message_id);
-				}
-			} catch (err) {
-				console.error('Error during file download:', err);
-				await ctx.reply('Произошла ошибка при сохранении файла. Попробуйте снова.');
-			}
-		} else {
-			await ctx.reply('Пожалуйста, отправьте файл.');
-		}
+                    downloadStream.data.pipe(fileStream);
+                    const publicFileUrl = `https://consultantnlgpanel.ru/api/uploads/${fileName}`;
+                    data = publicFileUrl;
+                } else {
+                    data = ctx.message.text;
+                }
+
+                ctx.wizard.state.data.fileExplain.push(data);
+
+                if (ctx.wizard.state.data.fileExplain.length === 1) {
+                    const msg = await ctx.reply(
+                        `Продолжайте отправлять сообщения, если это необходимо.\nКак закончите, нажмите на кнопку “Готово” ниже.`,
+                        {
+                            reply_markup: Markup.inlineKeyboard([
+                                [Markup.button.callback("Готово", "?noExplanation")]
+                            ]).resize().reply_markup
+                        }
+                    );
+                    ctx.wizard.state.deleteMessages.push(msg.message_id);
+                }
+            } catch (err) {
+                console.error('Error during file download:', err);
+                await ctx.reply('Произошла ошибка при сохранении файла. Попробуйте снова.');
+            }
+        } else {
+            await ctx.reply('Пожалуйста, отправьте файл.');
+        }
 	}
 
 )

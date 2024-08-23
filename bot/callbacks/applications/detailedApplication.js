@@ -1,6 +1,12 @@
 import { Markup } from 'telegraf'
 import ApplicationModel from '../../../models/Application.model.js'
 
+function extractFileName(file) {
+    const fileName = file.split('.')[0]; 
+    
+    return fileName;
+}
+
 const detailedApplication = (bot) => {
     bot.action([/\?detailedApp_(.+)/], async (ctx) => {
         const applicationId = ctx.match[1];
@@ -23,8 +29,9 @@ const detailedApplication = (bot) => {
                 messageText += `\n---\n<b>Ответ по заявке:</b>\n<b>Комментарии:</b> ${application.comments || 'Нет комментариев'}`
             )
             if (validFiles.length > 0) {
-                validFiles.forEach((file, index) => {
-                    messageText += `\nФайл ${index + 1}: <a href="https://kvik.cc/api/uploads/${file}">Скачать</a>\n`;
+                validFiles.forEach((file) => {
+                    const fileName = extractFileName(file);
+                    messageText += `\n<b>${fileName}</b>: <a href="https://consultantnlgpanel.ru/api/uploads/${file}">Скачать</a>\n`;
                 });
                 messageText += `\n----\nПри возникновении вопросов по заявке обращайтесь на почту adm01@uk-fp.ru. В теме письма укажите “Вопрос по заявке №${application.normalId}”.`
                 await ctx.editMessageText(
