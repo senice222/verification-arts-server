@@ -1,7 +1,7 @@
 import { Markup } from 'telegraf'
 import ApplicationModel from '../../../models/Application.model.js'
 
-function extractFileName(file) {
+export function extractFileName(file) {
     const fileName = file.split('.')[0]; 
     
     return fileName;

@@ -8,6 +8,7 @@ import { format, parseISO, isValid, addHours, startOfDay } from 'date-fns'
 import { ru } from 'date-fns/locale'
 import iconv from 'iconv-lite'
 import UserModel from '../../models/User.model.js';
+import { extractFileName } from '../callbacks/applications/detailedApplication.js';
 
 const __filename = fileURLToPath(import.meta.url)
 const __dirname = dirname(__filename)
@@ -27,20 +28,6 @@ const storage = multer.diskStorage({
     }
 })
 const upload = multer({ storage: storage })
-
-const normalizeDate = (date) => {
-    if (date instanceof Date) {
-        return date
-    }
-    if (typeof date === 'string') {
-        let parsedDate = parseISO(date)
-        if (!isValid(parsedDate)) {
-            parsedDate = new Date(date)
-        }
-        return parsedDate
-    }
-    return null
-}
 
 export const deleteApplication = (app, bot) => {
     app.delete("/api/application/delete/:id", async (req, res) => {
@@ -244,8 +231,9 @@ export const getClarifications = (app, bot) => {
             let messageText = `По заявке №${application.normalId} требуются уточнения:\n---\n${text}`;
             if (fileUrls.length > 0) {
                 messageText += `\n\nФайлы уточнений:`;
-                fileUrls.forEach((fileUrl, index) => {
-                    messageText += `\n<a href="${fileUrl}">Файл ${index + 1}</a>`;
+                fileUrls.forEach((fileUrl) => {
+                    const file = extractFileName(fileUrl)
+                    messageText += `\n<a href="${fileUrl}">${file}</a>`;
                 });
             }
 
