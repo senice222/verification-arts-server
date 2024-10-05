@@ -44,11 +44,12 @@ const sendClarifications = (bot) => {
         if (ctx.session.collectingClarifications) {
             const file = ctx.message.document
             const fileUrl = await ctx.telegram.getFileLink(file.file_id)
-            
+            const fileName = Buffer.from(file.file_name, 'binary').toString('utf8');            
+
             ctx.session.clarifications.push({
                 type: 'document',
                 fileId: file.file_id,
-                fileName: file.file_name,
+                fileName,
                 fileUrl,
                 timestamp: new Date()
             })

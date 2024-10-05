@@ -219,9 +219,9 @@ export const getClarifications = (app, bot) => {
             application.status = "На уточнении";
             application.history.push({ label: "Заявка передана на уточнение" });
             application.history.push({ label: "Статус заявки сменен На уточнении" });
-            if (text) {
+            if (text || fileUrls) {
                 const historyEntry = { label: text, admin, type: "comment" };
-                if (fileUrls.length > 0) {
+                if (fileUrls.length >= 0) {
                     historyEntry.fileUrls = fileUrls;
                 }
                 application.history.push(historyEntry);
